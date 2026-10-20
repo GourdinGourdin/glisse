@@ -78,6 +78,18 @@ const QUESTIONS = {
       ],
     },
     {
+      id: "region",
+      q: "Où se trouve ton école ?",
+      options: [
+        { label: "Bretagne", value: "bretagne" },
+        { label: "Landes et Pays basque", value: "landes" },
+        { label: "Méditerranée", value: "med" },
+        { label: "Normandie et Nord", value: "nord" },
+        { label: "Charente et Vendée", value: "charente" },
+        { label: "Ailleurs", value: "other" },
+      ],
+    },
+    {
       id: "courses",
       q: "Combien de cours donnez-vous par semaine en haute saison ?",
       options: [

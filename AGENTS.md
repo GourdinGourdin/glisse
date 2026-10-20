@@ -19,7 +19,7 @@ Landing page in `landing/` (static HTML/CSS/JS), live on https://glisse.vercel.a
 •  *What our form collects*: `email` (required), `school` (school name, school path only), `audience`
    (`ecole` | `pratiquant`), plus the quiz answers and computed result, saved in `answers`:
    - rider: `sport`, `sessions`, `skill`, `goal`, `format`, `region`
-   - school: `sport`, `courses`, `tool`, `calls`, `empty`, `price`, `visibility`, `season`
+   - school: `sport`, `region`, `courses`, `tool`, `calls`, `empty`, `price`, `visibility`, `season`
    - `result`: the computed result shown to the visitor
    - `consent`: required checkbox « J'accepte de recevoir des emails de Glisse ».
 •  *A good lead for us*: a surf school in the Landes, 30–60 courses a week, managed by phone and Excel,
