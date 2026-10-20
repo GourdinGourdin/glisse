@@ -230,6 +230,8 @@ h3 { font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
 .recos li p { padding-top: .35rem; }
 .result__fine { font-size: .82rem; color: var(--ink-soft); }
 
+.capture__consent { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.85rem; opacity: 0.9; text-align: left; }
+.capture__consent input { margin-top: 0.2rem; accent-color: var(--coral); }
 .capture { background: var(--deep); color: var(--white); border-radius: var(--radius); padding: 1.75rem; display: grid; gap: 1rem; }
 .capture p { color: #a9c3c9; }
 .capture form { display: flex; gap: .5rem; flex-wrap: wrap; }

@@ -21,7 +21,7 @@ Landing page in `landing/` (static HTML/CSS/JS), live on https://glisse.vercel.a
    - rider: `sport`, `sessions`, `skill`, `goal`, `format`, `region`
    - school: `sport`, `courses`, `tool`, `calls`, `empty`, `price`, `visibility`, `season`
    - `result`: the computed result shown to the visitor
-   ⚠️ The form has no consent checkbox yet: it must be added before any email is sent.
+   - `consent`: required checkbox « J'accepte de recevoir des emails de Glisse ».
 •  *A good lead for us*: a surf school in the Landes, 30–60 courses a week, managed by phone and Excel,
    3–4 empty spots per course, that left its school name.
    · *A lead we ignore*: a school that already uses booking software and is almost always full, or a
@@ -103,10 +103,71 @@ alter table emails enable row level security;
 •  *KEEP*: sent from `"Glisse" <GMAIL_USER>`, plain text plus a short HTML version, one line saying why the
   person receives it, only to leads with `consent = true`, at most 100 emails a day, tested on our own addresses first.
   Every email sent or received is saved in `emails`, and email 1 moves the lead to `contacted` with `last_email_at`.
-•  *YOURS · Email 1*: <TO WRITE — school: the cost report + proposal of a demo call; rider: welcome to the waiting list>
-•  *YOURS · The follow-up*: <TO WRITE>
+•  *YOURS · Tone*: French, « tu » (like the landing), short, warm, signed « Victor, fondateur de Glisse ».
+   Variables in `{…}` come from the lead (`answers.result`). Never change the texts without our OK.
+•  *YOURS · Email 1 · École* (sent right after the quiz)
+   - Subject: `Ton diagnostic Glisse : {revenue} récupérables par saison`
+   - Body:
+     ```
+     Salut,
 
-We write the texts: ask us for them, do not invent them.
+     Merci d'avoir fait le diagnostic Glisse{ pour {school}}. Voici ton résultat :
+
+     - Score de gestion : {score}/100 ({status})
+     - {hours} h par semaine passées sur l'administratif, soit {seasonHours} h sur la saison
+     - Environ {revenue} de chiffre d'affaires récupérable par saison
+
+     Nos 3 conseils pour ton école :
+     1. {reco1}
+     2. {reco2}
+     3. {reco3}
+
+     On construit Glisse avec quelques écoles pilotes : réservation en ligne, planning des
+     moniteurs et gestion des places, sans Excel ni téléphone. C'est gratuit pour les écoles pilotes.
+
+     Ça te dit qu'on en parle 15 minutes ? Réponds simplement à cet email{ ou choisis un créneau : {DEMO_URL}}.
+
+     Victor, fondateur de Glisse
+     ```
+•  *YOURS · Email 1 · Pratiquant*
+   - Subject: `Bienvenue sur Glisse : ton cours de {sport} t'attend`
+   - Body:
+     ```
+     Salut,
+
+     Merci d'avoir fait le test ! Ton niveau : {level}. Le cours qui te correspond : {course}.
+
+     Tu es sur la liste d'attente de Glisse. On te prévient dès qu'on ouvre les réservations
+     {where}, et si tu fais partie des 100 premiers inscrits, ton premier cours est offert.
+
+     Une question pour nous aider : quand comptes-tu aller à l'eau ? Réponds juste à cet email.
+
+     Victor, fondateur de Glisse
+     ```
+•  *YOURS · The follow-up* (one only, `FOLLOW_UP_DAYS` days later, subject « Re: » + email 1 subject)
+   - École:
+     ```
+     Salut,
+
+     Je reviens vers toi suite à ton diagnostic. Les écoles qui ressemblent à la tienne perdent
+     surtout du temps au téléphone en pleine saison : c'est exactement ce que Glisse règle.
+
+     15 minutes cette semaine ou la suivante, ça te va ? Une simple réponse « oui » suffit et je
+     te propose un créneau.
+
+     Victor
+     ```
+   - Pratiquant:
+     ```
+     Salut,
+
+     Petit rappel : tu es bien sur la liste d'attente Glisse, ton cours offert est réservé si tu
+     fais partie des 100 premiers. Tu connais quelqu'un que ça intéresserait ? Transfère-lui cet email.
+
+     Victor
+     ```
+•  *Why you receive it* (footer, every email): « Tu reçois cet email parce que tu as fait le test sur
+   glisse.vercel.app. Réponds STOP pour ne plus rien recevoir. » A reply « STOP » sets `status = 'lost'`.
 
 ## The follow-up robot · KEEP
 

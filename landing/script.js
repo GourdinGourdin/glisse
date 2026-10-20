@@ -350,6 +350,7 @@ function captureForm(cta, withSchool = false) {
     <form novalidate>
       ${withSchool ? `<input type="text" name="school" placeholder="Nom de l'école" autocomplete="organization">` : ""}
       <input type="email" name="email" required placeholder="ton@email.fr" autocomplete="email">
+      <label class="capture__consent"><input type="checkbox" name="consent" required> J'accepte de recevoir des emails de Glisse (désinscription en un clic).</label>
       <button class="btn" type="submit">${cta}</button>
     </form>
     <p class="capture__msg" role="status" aria-live="polite"></p>`;
@@ -367,8 +368,15 @@ async function submitLead(e) {
     return;
   }
 
+  if (!form.elements.consent.checked) {
+    msg.textContent = "Coche la case pour recevoir ton résultat par email.";
+    msg.classList.add("is-error");
+    return;
+  }
+
   const payload = {
     ...Object.fromEntries(new FormData(form)),
+    consent: true,
     audience: state.path === "school" ? "ecole" : "pratiquant",
     answers: state.answers,
     result: state.result,
