@@ -2,30 +2,34 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
+  <script>document.documentElement.classList.add("js")</script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Glisse, réserver un cours de surf ou de voile en ligne</title>
   <meta name="description" content="Glisse permet de réserver un cours de surf ou de voile en ligne et donne aux écoles un outil simple pour gérer leurs cours.">
   <meta property="og:title" content="Glisse, réserver un cours de surf ou de voile en ligne">
   <meta property="og:description" content="Trouve un cours à ton niveau et réserve en ligne. Pour les écoles, un planning qui se remplit tout seul.">
-  <meta name="theme-color" content="#f7f4ee">
+  <meta name="theme-color" content="#06303c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="scrollbar" aria-hidden="true"><i></i></div>
 
-  <header class="nav">
+  <header class="nav nav--over">
     <div class="container nav__inner">
-      <a href="#" class="logo" aria-label="Glisse, accueil">
+      <a href="index.html" class="logo" aria-label="Glisse, accueil">
         <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>
         glisse
       </a>
+      <button class="nav__burger" type="button" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
       <nav class="nav__links">
         <a href="#pratiquants">Pratiquants</a>
         <a href="#ecoles">Écoles</a>
-        <a href="#diagnostic" class="btn btn--dark btn--small">Faire le test</a>
+        <a href="a-propos.html">À propos</a>
+        <a href="#diagnostic" class="btn btn--small">Faire le test</a>
       </nav>
     </div>
   </header>
@@ -33,21 +37,27 @@
   <main>
     <!-- HERO -->
     <section class="hero">
+      <div class="hero__sky" aria-hidden="true">
+        <div class="hero__sun"></div>
+        <div class="hero__grain"></div>
+      </div>
+
       <div class="container hero__grid">
         <div class="hero__text">
-          <h1>Les cours de surf et de voile se réservent enfin en ligne.</h1>
-          <p class="hero__lead">
+          <p class="eyebrow reveal">Surf · Voile · Kite · Paddle</p>
+          <h1 class="split">Réserve ta prochaine <em>session</em> en trois clics.</h1>
+          <p class="hero__lead reveal" style="--d:.35s">
             Trouve un cours à ton niveau, sur le bon spot, et réserve ta place sans passer un coup de fil.
             Pour les écoles, c'est un planning qui se remplit tout seul.
           </p>
-          <div class="hero__ctas">
-            <a href="#diagnostic" class="btn" data-path="rider">Trouver mon niveau</a>
-            <a href="#diagnostic" class="btn btn--line" data-path="school">Je gère une école</a>
+          <div class="hero__ctas reveal" style="--d:.5s">
+            <a href="#diagnostic" class="btn btn--glow" data-path="rider">Trouver mon niveau <span aria-hidden="true">→</span></a>
+            <a href="#diagnostic" class="btn btn--ghost" data-path="school">Je gère une école</a>
           </div>
-          <p class="hero__note">Le test prend 2 minutes et ton résultat s'affiche tout de suite.</p>
+          <p class="hero__note reveal" style="--d:.6s"><span class="pulse"></span> Le test prend 2 minutes, résultat immédiat.</p>
         </div>
 
-        <div class="phone" aria-hidden="true">
+        <div class="phone reveal" style="--d:.3s" aria-hidden="true" data-tilt>
           <div class="phone__screen">
             <div class="app__top">
               <span class="app__hello">Cette semaine</span>
@@ -74,27 +84,38 @@
               <span>Vagues 0,8 m</span><span>Vent 12 km/h</span><span>Eau 17°</span>
             </div>
           </div>
+          <div class="float float--a"><b>✓</b> Place confirmée</div>
+          <div class="float float--b">Houle 1,2 m · 11 s</div>
         </div>
       </div>
 
-      <div class="marquee" aria-hidden="true">
-        <div class="marquee__track">
-          <span>Surf</span><span>Voile</span><span>Kitesurf</span><span>Paddle</span><span>Wing foil</span><span>Catamaran</span><span>Bodyboard</span><span>Planche à voile</span>
-          <span>Surf</span><span>Voile</span><span>Kitesurf</span><span>Paddle</span><span>Wing foil</span><span>Catamaran</span><span>Bodyboard</span><span>Planche à voile</span>
-        </div>
+      <div class="waves" aria-hidden="true">
+        <svg class="wave wave--3" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 110c240-60 480-60 720 0s480 60 720 0 480-60 720 0 480 60 720 0v90H0z"/></svg>
+        <svg class="wave wave--2" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 130c120-45 240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0v70H0z"/></svg>
+        <svg class="wave wave--1" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 150c240-40 480-40 720 0s480 40 720 0 480-40 720 0 480 40 720 0v50H0z"/></svg>
       </div>
     </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span>Surf</span><i>✺</i><span>Voile</span><i>✺</i><span>Kitesurf</span><i>✺</i><span>Paddle</span><i>✺</i><span>Wing foil</span><i>✺</i><span>Catamaran</span><i>✺</i><span>Bodyboard</span><i>✺</i><span>Planche à voile</span><i>✺</i>
+        <span>Surf</span><i>✺</i><span>Voile</span><i>✺</i><span>Kitesurf</span><i>✺</i><span>Paddle</span><i>✺</i><span>Wing foil</span><i>✺</i><span>Catamaran</span><i>✺</i><span>Bodyboard</span><i>✺</i><span>Planche à voile</span><i>✺</i>
+      </div>
+    </div>
 
     <!-- PRATIQUANTS -->
     <section class="section" id="pratiquants">
       <div class="container">
         <div class="section__head">
-          <h2>Tu veux apprendre ou progresser</h2>
-          <p>Aujourd'hui il faut appeler trois écoles, espérer qu'une décroche et deviner si le cours est fait pour toi. On simplifie tout ça.</p>
+          <div>
+            <p class="eyebrow eyebrow--dark reveal">Pour les pratiquants</p>
+            <h2 class="split">Tu veux apprendre ou <em>progresser</em>.</h2>
+          </div>
+          <p class="reveal" style="--d:.15s">Aujourd'hui il faut appeler trois écoles, espérer qu'une décroche et deviner si le cours est fait pour toi. On simplifie tout ça.</p>
         </div>
 
         <div class="bento">
-          <article class="tile tile--wide">
+          <article class="tile tile--wide reveal">
             <div>
               <h3>Un niveau clair pour chaque cours</h3>
               <p>Chaque créneau indique pour qui il est pensé. Tu ne te retrouves plus avec des confirmés quand tu débutes, ni l'inverse.</p>
@@ -107,16 +128,17 @@
             </div>
           </article>
 
-          <article class="tile">
+          <article class="tile reveal" style="--d:.1s">
             <h3>Les infos sur chaque plage</h3>
             <p>Type de vagues, courants, niveau conseillé et accès. De quoi choisir le bon spot avant de réserver.</p>
             <div class="spotcard" aria-hidden="true">
+              <svg class="spotcard__wave" viewBox="0 0 240 30" preserveAspectRatio="none"><path d="M0 18c20-12 40-12 60 0s40 12 60 0 40-12 60 0 40 12 60 0"/></svg>
               <b>Plage du Porge</b>
               <span>Fond sableux, idéal pour débuter</span>
             </div>
           </article>
 
-          <article class="tile">
+          <article class="tile reveal">
             <h3>Toutes les écoles au même endroit</h3>
             <p>Compare les horaires, les tarifs et les formats entre les écoles d'un même coin.</p>
             <ul class="schools" aria-hidden="true">
@@ -126,7 +148,7 @@
             </ul>
           </article>
 
-          <article class="tile tile--accent">
+          <article class="tile tile--accent reveal" style="--d:.1s">
             <div>
               <h3>Réservé en trois clics</h3>
               <p>Tu choisis le créneau, tu paies, tu reçois la confirmation. Et si la météo annule le cours, tu es prévenu.</p>
@@ -143,16 +165,35 @@
       </div>
     </section>
 
+    <!-- COMMENT ÇA MARCHE -->
+    <section class="section section--sand">
+      <div class="container">
+        <div class="section__head section__head--center">
+          <p class="eyebrow eyebrow--dark reveal">Comment ça marche</p>
+          <h2 class="split">Du canapé au <em>line-up</em>.</h2>
+        </div>
+        <ol class="steps">
+          <li class="reveal"><span class="steps__n">01</span><h3>Tu fais le test</h3><p>Quelques questions sur ton niveau, ton sport et ta région.</p></li>
+          <li class="reveal" style="--d:.12s"><span class="steps__n">02</span><h3>On te propose le bon cours</h3><p>Le format et le niveau qui te correspondent, près de chez toi.</p></li>
+          <li class="reveal" style="--d:.24s"><span class="steps__n">03</span><h3>Tu réserves, tu glisses</h3><p>Paiement en ligne, confirmation immédiate, alerte météo si besoin.</p></li>
+        </ol>
+      </div>
+    </section>
+
     <!-- ÉCOLES -->
     <section class="section section--deep" id="ecoles">
+      <svg class="divider divider--top" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v30c-240 50-480 50-720 0S240-20 0 30z"/></svg>
       <div class="container">
         <div class="section__head">
-          <h2>Tu gères une école</h2>
-          <p>Entre le carnet, le fichier Excel et le téléphone qui sonne en pleine session, la saison passe vite. Glisse regroupe tout dans un seul outil.</p>
+          <div>
+            <p class="eyebrow reveal">Pour les écoles</p>
+            <h2 class="split">Tu gères une <em>école</em>.</h2>
+          </div>
+          <p class="reveal" style="--d:.15s">Entre le carnet, le fichier Excel et le téléphone qui sonne en pleine session, la saison passe vite. Glisse regroupe tout dans un seul outil.</p>
         </div>
 
         <div class="school">
-          <div class="planning" aria-hidden="true">
+          <div class="planning reveal" aria-hidden="true">
             <div class="planning__head">
               <b>Semaine 32</b><span>84 % rempli</span>
             </div>
@@ -168,37 +209,28 @@
           </div>
 
           <ul class="school__list">
-            <li>
-              <h3>Le planning et les inscrits au même endroit</h3>
-              <p>Cours, moniteurs, matériel et participants. Ton équipe voit la même chose que toi, en temps réel.</p>
-            </li>
-            <li>
-              <h3>Les clients réservent seuls</h3>
-              <p>Ils s'inscrivent et paient en ligne, même à 23h. Toi, tu ne gères plus que les exceptions.</p>
-            </li>
-            <li>
-              <h3>Les places libérées se remplissent</h3>
-              <p>Liste d'attente, rappels automatiques et report en cas de mauvaise météo.</p>
-            </li>
-            <li>
-              <h3>Plus de monde te trouve</h3>
-              <p>Ton école apparaît quand quelqu'un cherche un cours près de chez toi.</p>
-            </li>
+            <li class="reveal"><h3>Le planning et les inscrits au même endroit</h3><p>Cours, moniteurs, matériel et participants. Ton équipe voit la même chose que toi, en temps réel.</p></li>
+            <li class="reveal" style="--d:.08s"><h3>Les clients réservent seuls</h3><p>Ils s'inscrivent et paient en ligne, même à 23h. Toi, tu ne gères plus que les exceptions.</p></li>
+            <li class="reveal" style="--d:.16s"><h3>Les places libérées se remplissent</h3><p>Liste d'attente, rappels automatiques et report en cas de mauvaise météo.</p></li>
+            <li class="reveal" style="--d:.24s"><h3>Plus de monde te trouve</h3><p>Ton école apparaît quand quelqu'un cherche un cours près de chez toi.</p></li>
           </ul>
         </div>
+
+        <a href="a-propos.html#offre" class="link-arrow reveal">Voir l'offre école pilote <span aria-hidden="true">→</span></a>
       </div>
+      <svg class="divider divider--bottom" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 80h1440V50c-240-50-480-50-720 0S240 100 0 50z"/></svg>
     </section>
 
     <!-- DIAGNOSTIC -->
     <section class="section" id="diagnostic">
       <div class="container">
         <div class="section__head section__head--center">
-          <h2>Fais le test</h2>
-          <p>Deux minutes, quelques questions, et un résultat qui te concerne vraiment.</p>
+          <p class="eyebrow eyebrow--dark reveal">Le diagnostic</p>
+          <h2 class="split">Fais le <em>test</em>.</h2>
+          <p class="reveal" style="--d:.15s">Deux minutes, quelques questions, et un résultat qui te concerne vraiment.</p>
         </div>
 
-        <div class="quiz" id="quiz">
-          <!-- Écran de départ -->
+        <div class="quiz reveal" id="quiz">
           <div class="quiz__screen" data-screen="start">
             <div class="paths">
               <button class="path" data-path="rider">
@@ -207,6 +239,7 @@
                 </span>
                 <span class="path__title">Je veux prendre des cours</span>
                 <span class="path__desc">Découvre ton niveau et le type de cours qui te correspond.</span>
+                <span class="path__go" aria-hidden="true">→</span>
               </button>
               <button class="path" data-path="school">
                 <span class="path__icon" aria-hidden="true">
@@ -214,11 +247,11 @@
                 </span>
                 <span class="path__title">Je gère une école</span>
                 <span class="path__desc">Estime le temps et l'argent que te coûte ta gestion actuelle.</span>
+                <span class="path__go" aria-hidden="true">→</span>
               </button>
             </div>
           </div>
 
-          <!-- Écran question -->
           <div class="quiz__screen" data-screen="question" hidden>
             <div class="quiz__top">
               <button class="quiz__back" type="button">Retour</button>
@@ -229,7 +262,6 @@
             <div class="quiz__options"></div>
           </div>
 
-          <!-- Écran résultat -->
           <div class="quiz__screen" data-screen="result" hidden>
             <div class="result"></div>
           </div>
@@ -239,15 +271,21 @@
   </main>
 
   <footer class="footer">
-    <div class="container footer__inner">
-      <a href="#" class="logo logo--small">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>
-        glisse
-      </a>
-      <p>&copy; <span id="year"></span> Glisse</p>
+    <svg class="divider divider--top" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v30c-240 50-480 50-720 0S240-20 0 30z"/></svg>
+    <div class="container">
+      <p class="footer__big split">On se voit à <em>l'eau</em>.</p>
+      <div class="footer__inner">
+        <a href="index.html" class="logo logo--small">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>
+          glisse
+        </a>
+        <nav class="footer__links"><a href="#pratiquants">Pratiquants</a><a href="#ecoles">Écoles</a><a href="a-propos.html">À propos</a><a href="a-propos.html#faq">FAQ</a></nav>
+        <p>&copy; <span id="year"></span> Glisse</p>
+      </div>
     </div>
   </footer>
 
+  <script src="site.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

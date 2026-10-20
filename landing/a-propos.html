@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <script>document.documentElement.classList.add("js")</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>À propos de Glisse : mission, offre, équipe</title>
+  <meta name="description" content="Pourquoi on construit Glisse, l'offre pour les pratiquants et les écoles pilotes, l'équipe et les questions fréquentes.">
+  <meta name="theme-color" content="#06303c">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="scrollbar" aria-hidden="true"><i></i></div>
+
+  <header class="nav nav--over">
+    <div class="container nav__inner">
+      <a href="index.html" class="logo" aria-label="Glisse, accueil">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>
+        glisse
+      </a>
+      <button class="nav__burger" type="button" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
+      <nav class="nav__links">
+        <a href="index.html#pratiquants">Pratiquants</a>
+        <a href="index.html#ecoles">Écoles</a>
+        <a href="a-propos.html" aria-current="page">À propos</a>
+        <a href="index.html#diagnostic" class="btn btn--small">Faire le test</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero hero--page">
+      <div class="hero__sky" aria-hidden="true">
+        <div class="hero__sun"></div>
+        <div class="hero__grain"></div>
+      </div>
+      <div class="container hero__page">
+        <p class="eyebrow reveal">À propos</p>
+        <h1 class="split">On remet les écoles <em>à l'eau</em>, pas au téléphone.</h1>
+        <p class="hero__lead reveal" style="--d:.35s">Glisse est né d'un constat simple : réserver un cours de surf ou de voile, en 2026, ça se fait encore au téléphone. On veut que les écoles passent leur temps sur la plage, et que tout le monde trouve le cours qui lui va.</p>
+      </div>
+      <div class="waves waves--short" aria-hidden="true">
+        <svg class="wave wave--3" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 110c240-60 480-60 720 0s480 60 720 0 480-60 720 0 480 60 720 0v90H0z"/></svg>
+        <svg class="wave wave--2" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 130c120-45 240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0v70H0z"/></svg>
+        <svg class="wave wave--1" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 150c240-40 480-40 720 0s480 40 720 0 480-40 720 0 480 40 720 0v50H0z"/></svg>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Sections de la page">
+      <div class="container tabs__inner">
+        <a href="#mission" class="tabs__link is-active">Mission</a>
+        <a href="#offre" class="tabs__link">L'offre</a>
+        <a href="#equipe" class="tabs__link">L'équipe</a>
+        <a href="#faq" class="tabs__link">FAQ</a>
+        <span class="tabs__ink" aria-hidden="true"></span>
+      </div>
+    </nav>
+
+    <!-- MISSION -->
+    <section class="section" id="mission">
+      <div class="container">
+        <div class="section__head">
+          <div>
+            <p class="eyebrow eyebrow--dark reveal">Mission</p>
+            <h2 class="split">Moins d'<em>admin</em>, plus de sessions.</h2>
+          </div>
+          <p class="reveal" style="--d:.15s">Les sports de glisse sont parmi les moins digitalisés qui soient. Les écoles jonglent entre carnet, Excel et téléphone ; les pratiquants, entre trois numéros qui ne répondent pas.</p>
+        </div>
+
+        <div class="values">
+          <article class="value reveal">
+            <span class="value__icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M6 30c6 0 8-10 18-10s12 10 18 10"/><path d="M6 38c6 0 8-6 18-6s12 6 18 6" opacity=".5"/></svg></span>
+            <h3>Simple comme une glissade</h3>
+            <p>Si une école doit lire une notice, c'est raté. Tout doit se faire depuis un téléphone, sur la plage, entre deux cours.</p>
+          </article>
+          <article class="value reveal" style="--d:.1s">
+            <span class="value__icon" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="9"/><path d="M24 5v6M24 37v6M5 24h6M37 24h6M10.5 10.5l4 4M33.5 33.5l4 4M10.5 37.5l4-4M33.5 14.5l4-4"/></svg></span>
+            <h3>Pensé avec les écoles</h3>
+            <p>On construit chaque fonctionnalité avec des écoles pilotes, à partir de leurs vraies journées de saison.</p>
+          </article>
+          <article class="value reveal" style="--d:.2s">
+            <span class="value__icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M24 6c8 8 12 15 12 22a12 12 0 0 1-24 0c0-7 4-14 12-22z"/></svg></span>
+            <h3>Le bon cours, au bon niveau</h3>
+            <p>Chaque créneau dit clairement pour qui il est fait. Moins de mauvaises surprises, plus de progression.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- OFFRE -->
+    <section class="section section--sand" id="offre">
+      <div class="container">
+        <div class="section__head section__head--center">
+          <p class="eyebrow eyebrow--dark reveal">L'offre</p>
+          <h2 class="split">Deux façons de <em>monter à bord</em>.</h2>
+          <p class="reveal" style="--d:.15s">Glisse est en phase pilote. Les premiers arrivés construisent l'outil avec nous, et en profitent en premier.</p>
+        </div>
+
+        <div class="offers">
+          <article class="offer reveal">
+            <p class="offer__tag">Pratiquants</p>
+            <h3>Liste d'attente</h3>
+            <p class="offer__price">Gratuit</p>
+            <ul class="offer__list">
+              <li>Ton niveau et le cours conseillé, tout de suite</li>
+              <li>Un accès en avant-première aux réservations</li>
+              <li>Ton premier cours offert si tu es parmi les 100 premiers inscrits</li>
+              <li>Les infos spots : vagues, fonds, niveau conseillé</li>
+            </ul>
+            <a href="index.html#diagnostic" class="btn btn--line">Faire le test pratiquant</a>
+          </article>
+
+          <article class="offer offer--hot reveal" style="--d:.12s">
+            <p class="offer__tag">Écoles · places limitées</p>
+            <h3>École pilote</h3>
+            <p class="offer__price">Gratuit <small>pendant toute la phase pilote</small></p>
+            <ul class="offer__list">
+              <li>Planning des cours, des moniteurs et du matériel</li>
+              <li>Réservation et paiement en ligne pour tes clients</li>
+              <li>Liste d'attente et rappels automatiques</li>
+              <li>Ta page école visible par les pratiquants de ta région</li>
+              <li>Mise en place avec nous, en direct</li>
+            </ul>
+            <a href="index.html#diagnostic" class="btn btn--dark">Faire le diagnostic école</a>
+            <p class="offer__fine">Le tarif après la phase pilote sera fixé avec les écoles pilotes, qui garderont des conditions préférentielles.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ÉQUIPE -->
+    <section class="section section--deep" id="equipe">
+      <svg class="divider divider--top" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v30c-240 50-480 50-720 0S240-20 0 30z"/></svg>
+      <div class="container">
+        <div class="section__head">
+          <div>
+            <p class="eyebrow reveal">L'équipe</p>
+            <h2 class="split">Le <em>crew</em>.</h2>
+          </div>
+          <p class="reveal" style="--d:.15s">Une petite équipe, des pratiquants, et des écoles qui nous ouvrent les portes de leur saison.</p>
+        </div>
+
+        <div class="crew">
+          <article class="member reveal">
+            <div class="member__avatar" aria-hidden="true">V</div>
+            <h3>Victor</h3>
+            <p class="member__role">Fondateur</p>
+            <p>Étudiant à HEC Paris, il construit Glisse pour rendre les sports de glisse aussi simples à réserver qu'un restaurant.</p>
+          </article>
+          <article class="member reveal" style="--d:.1s">
+            <div class="member__avatar member__avatar--wave" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M6 30c6 0 8-10 18-10s12 10 18 10"/></svg></div>
+            <h3>Les écoles pilotes</h3>
+            <p class="member__role">Co-constructeurs</p>
+            <p>Des écoles de surf et de voile qui testent l'outil en conditions réelles et nous disent ce qui marche, et ce qui ne marche pas.</p>
+          </article>
+          <article class="member member--open reveal" style="--d:.2s">
+            <div class="member__avatar member__avatar--plus" aria-hidden="true">+</div>
+            <h3>Toi ?</h3>
+            <p class="member__role">On cherche du monde</p>
+            <p>Tu es moniteur, gérant d'école, dev ou juste passionné de glisse ? Écris-nous, on aime les profils qui ont du sel dans les cheveux.</p>
+          </article>
+        </div>
+      </div>
+      <svg class="divider divider--bottom" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 80h1440V50c-240-50-480-50-720 0S240 100 0 50z"/></svg>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="container container--narrow">
+        <div class="section__head section__head--center">
+          <p class="eyebrow eyebrow--dark reveal">FAQ</p>
+          <h2 class="split">Les questions qu'on nous <em>pose</em>.</h2>
+        </div>
+        <div class="faq">
+          <details class="reveal">
+            <summary>Quand est-ce que je pourrai réserver ?</summary>
+            <p>On ouvre d'abord avec quelques écoles pilotes. Si tu es sur la liste d'attente, tu es prévenu en premier dès que des cours sont réservables dans ta région.</p>
+          </details>
+          <details class="reveal">
+            <summary>Dans quelles régions ?</summary>
+            <p>On commence par les côtes françaises : Bretagne, Landes et Pays basque, Méditerranée, Normandie, Charente et Vendée. Le test nous aide à savoir où ouvrir en priorité.</p>
+          </details>
+          <details class="reveal">
+            <summary>Quels sports ?</summary>
+            <p>Le surf et la voile pour commencer, puis le kitesurf, le paddle, le wing foil et d'autres sports encore peu digitalisés.</p>
+          </details>
+          <details class="reveal">
+            <summary>Combien ça coûte pour une école ?</summary>
+            <p>Rien pendant la phase pilote. Ensuite, le tarif sera construit avec les écoles pilotes, qui garderont des conditions préférentielles.</p>
+          </details>
+          <details class="reveal">
+            <summary>Que faites-vous de mon email ?</summary>
+            <p>On l'utilise uniquement pour t'envoyer ton résultat et les nouvelles de Glisse. Tu peux te désinscrire à tout moment en répondant STOP.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="container cta-band__inner reveal">
+        <h2>Prêt à <em>glisser</em> ?</h2>
+        <div class="hero__ctas">
+          <a href="index.html#diagnostic" class="btn btn--glow">Faire le test <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <svg class="divider divider--top" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v30c-240 50-480 50-720 0S240-20 0 30z"/></svg>
+    <div class="container">
+      <p class="footer__big split">On se voit à <em>l'eau</em>.</p>
+      <div class="footer__inner">
+        <a href="index.html" class="logo logo--small">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>
+          glisse
+        </a>
+        <nav class="footer__links"><a href="index.html#pratiquants">Pratiquants</a><a href="index.html#ecoles">Écoles</a><a href="a-propos.html">À propos</a><a href="#faq">FAQ</a></nav>
+        <p>&copy; <span id="year"></span> Glisse</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="site.js"></script>
+</body>
+</html>

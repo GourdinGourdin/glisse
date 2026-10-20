@@ -5,8 +5,6 @@ const FORM_ENDPOINT = "";
 // Lien de prise de rendez-vous pour les démos écoles (Calendly, Cal.com...).
 const DEMO_URL = "";
 
-document.getElementById("year").textContent = new Date().getFullYear();
-
 /* ---------- Questions ---------- */
 
 const QUESTIONS = {
@@ -405,11 +403,6 @@ async function submitLead(e) {
 }
 
 /* ---------- Branchements ---------- */
-
-const nav = document.querySelector(".nav");
-const onScroll = () => nav.classList.toggle("is-scrolled", scrollY > 8);
-addEventListener("scroll", onScroll, { passive: true });
-onScroll();
 
 quiz.querySelectorAll(".path").forEach((btn) => btn.addEventListener("click", () => start(btn.dataset.path)));
 quiz.querySelector(".quiz__back").addEventListener("click", back);
