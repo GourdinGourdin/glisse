@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Glisse CRM</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- Connexion -->
+  <section class="login" id="login" hidden>
+    <form class="login__card">
+      <a href="index.html" class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>glisse <span>CRM</span></a>
+      <label for="password">Mot de passe admin</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+      <button class="btn" type="submit">Se connecter</button>
+      <p class="login__msg" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- CRM -->
+  <div class="app" id="app" hidden>
+    <header class="top">
+      <a href="index.html" class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>glisse <span>CRM</span></a>
+      <div class="top__actions">
+        <button class="ghost" id="refresh" type="button" title="Recharger">↻ Recharger</button>
+        <button class="ghost" id="export" type="button">Exporter CSV</button>
+        <button class="ghost" id="logout" type="button">Déconnexion</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="kpis" id="kpis"></section>
+
+      <section class="bar">
+        <div class="views" role="tablist">
+          <button class="views__btn is-on" data-view="table" role="tab">Liste</button>
+          <button class="views__btn" data-view="board" role="tab">Pipeline</button>
+        </div>
+        <input class="search" id="search" type="search" placeholder="Rechercher un email, une école…">
+        <select id="f-audience">
+          <option value="">Tous les leads</option>
+          <option value="ecole">Écoles</option>
+          <option value="pratiquant">Pratiquants</option>
+        </select>
+        <select id="f-status"><option value="">Tous les statuts</option></select>
+        <select id="f-region"><option value="">Toutes les régions</option></select>
+        <select id="f-sort">
+          <option value="priority">Trier : priorité</option>
+          <option value="recent">Trier : plus récents</option>
+        </select>
+      </section>
+
+      <section class="view" id="view-table">
+        <table class="table">
+          <thead>
+            <tr><th>Priorité</th><th>Lead</th><th>Type</th><th>Sport · Région</th><th>Résultat</th><th>Statut</th><th>Arrivé</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p class="empty" id="empty" hidden>Aucun lead pour l'instant. Ils arriveront ici dès qu'un visiteur finira le test.</p>
+      </section>
+
+      <section class="view board" id="view-board" hidden></section>
+    </main>
+
+    <!-- Fiche lead -->
+    <div class="scrim" id="scrim" hidden></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <button class="drawer__close" id="close" type="button" aria-label="Fermer">×</button>
+      <div id="detail"></div>
+    </aside>
+
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+
+  <script src="questions.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
