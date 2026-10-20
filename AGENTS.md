@@ -98,6 +98,30 @@ alter table leads enable row level security;   -- no policy: only the server, wi
 alter table emails enable row level security;
 ```
 
+The full, current schema is `landing/db/schema.sql` (idempotent: safe to run again). On top of the two tables above it adds:
+`leads.next_action_at` / `leads.next_action`, a `prospects` table (schools we canvass) and an `activities` table
+(manual log of calls, emails, messages, meetings, notes on a lead or a prospect). All tables have RLS on, no policy.
+
+## CRM and prospecting · YOURS
+
+`/admin` (protected by `ADMIN_PASSWORD`) has three tabs:
+
+•  *À faire*: overdue, today and next-7-days actions (leads + prospects), plus suggestions (hot new leads, best schools to call).
+•  *Leads*: quiz leads, priority score /100, list + drag-and-drop pipeline, funnel, lead sheet with answers, next action,
+   activity log and ready-to-send email 1 / follow-up (manual, via the user's mail app).
+•  *Prospection*: schools to canvass, from OpenStreetMap (ODbL: keep the attribution visible), CSV import or manual add.
+   Fit score /100, statuses `to_contact → contacted → interested → pilot | not_interested`, "find email" on the school's
+   website, first email / follow-up / call script templates (vouvoiement, identity + STOP line for CNIL B2B rules).
+
+Rules:
+•  Prospecting emails are written and sent *by hand*, one school at a time. No bulk sending (out of scope).
+•  Logging an activity on a *lead* never changes its status: the follow-up robot relies on `status` and `last_email_at`.
+•  A prospect is linked to a lead automatically when a school does the quiz with the same email or website domain
+   (personal mailboxes like gmail.com are ignored); it then moves to `interested`.
+•  OSM import runs one département per request (`api/_osm.js`, Overpass API, can be slow or down: retry later).
+   Re-importing never overwrites existing prospects.
+•  Server routes: `api/lead.js`, `api/admin/{login,leads,prospects,activities}.js` (Vercel Hobby: max 12 functions).
+
 ## Emails · KEEP the settings, YOURS the words
 
 •  *KEEP*: sent from `"Glisse" <GMAIL_USER>`, plain text plus a short HTML version, one line saying why the

@@ -18,7 +18,7 @@
     <form class="login__card">
       <a href="index.html" class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>glisse <span>CRM</span></a>
       <label for="password">Mot de passe admin</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
       <button class="btn" type="submit">Se connecter</button>
       <p class="login__msg" role="alert"></p>
     </form>
@@ -28,59 +28,173 @@
   <div class="app" id="app" hidden>
     <header class="top">
       <a href="index.html" class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20c4 0 5-6 10-6s6 6 10 6 5-3 6-3" /><path d="M3 26c4 0 5-4 10-4s6 4 10 4 5-2 6-2" opacity=".5"/></svg>glisse <span>CRM</span></a>
+      <nav class="tabs" role="tablist">
+        <button class="tab" data-tab="todo" role="tab">À faire <em id="todo-count"></em></button>
+        <button class="tab is-on" data-tab="leads" role="tab">Leads</button>
+        <button class="tab" data-tab="prospects" role="tab">Prospection</button>
+      </nav>
       <div class="top__actions">
-        <button class="ghost" id="refresh" type="button" title="Recharger">↻ Recharger</button>
+        <button class="ghost" id="refresh" type="button" title="Recharger les données">↻</button>
         <button class="ghost" id="export" type="button">Exporter CSV</button>
         <button class="ghost" id="logout" type="button">Déconnexion</button>
       </div>
     </header>
 
-    <main class="wrap">
+    <!-- À FAIRE -->
+    <main class="wrap" id="tab-todo" hidden>
+      <div class="todo" id="todo"></div>
+    </main>
+
+    <!-- LEADS -->
+    <main class="wrap" id="tab-leads">
       <section class="kpis" id="kpis"></section>
+      <section class="funnel" id="funnel" aria-label="Entonnoir des leads"></section>
 
       <section class="bar">
         <div class="views" role="tablist">
           <button class="views__btn is-on" data-view="table" role="tab">Liste</button>
           <button class="views__btn" data-view="board" role="tab">Pipeline</button>
         </div>
-        <input class="search" id="search" type="search" placeholder="Rechercher un email, une école…">
-        <select id="f-audience">
+        <input class="search" id="search" type="search" placeholder="Rechercher un email, une école, une note…  ( / )">
+        <select id="f-audience" aria-label="Type de lead">
           <option value="">Tous les leads</option>
           <option value="ecole">Écoles</option>
           <option value="pratiquant">Pratiquants</option>
         </select>
-        <select id="f-status"><option value="">Tous les statuts</option></select>
-        <select id="f-region"><option value="">Toutes les régions</option></select>
-        <select id="f-sort">
+        <select id="f-status" aria-label="Statut"><option value="">Tous les statuts</option></select>
+        <select id="f-region" aria-label="Région"><option value="">Toutes les régions</option></select>
+        <select id="f-sort" aria-label="Tri">
           <option value="priority">Trier : priorité</option>
           <option value="recent">Trier : plus récents</option>
+          <option value="next">Trier : prochaine action</option>
         </select>
       </section>
 
       <section class="view" id="view-table">
-        <table class="table">
-          <thead>
-            <tr><th>Priorité</th><th>Lead</th><th>Type</th><th>Sport · Région</th><th>Résultat</th><th>Statut</th><th>Arrivé</th></tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-        <p class="empty" id="empty" hidden>Aucun lead pour l'instant. Ils arriveront ici dès qu'un visiteur finira le test.</p>
+        <div class="tablewrap">
+          <table class="table">
+            <thead>
+              <tr><th>Priorité</th><th>Lead</th><th>Type</th><th>Sport · Région</th><th>Résultat</th><th>Statut</th><th>Prochaine action</th><th>Arrivé</th></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <p class="empty" id="empty" hidden>Aucun lead ne correspond. Les leads arrivent ici dès qu'un visiteur finit le test.</p>
+        </div>
       </section>
 
       <section class="view board" id="view-board" hidden></section>
     </main>
 
-    <!-- Fiche lead -->
+    <!-- PROSPECTION -->
+    <main class="wrap" id="tab-prospects" hidden>
+      <section class="kpis kpis--7" id="p-kpis"></section>
+      <section class="funnel" id="p-funnel" aria-label="Entonnoir de prospection"></section>
+
+      <section class="bar">
+        <input class="search" id="p-search" type="search" placeholder="Rechercher une école, une ville…  ( / )">
+        <select id="p-status" aria-label="Statut"><option value="">Tous les statuts</option></select>
+        <select id="p-region" aria-label="Région"><option value="">Toutes les régions</option></select>
+        <select id="p-sport" aria-label="Sport">
+          <option value="">Tous les sports</option>
+          <option value="surf">Surf</option>
+          <option value="voile">Voile</option>
+          <option value="kite">Kite</option>
+          <option value="paddle">Paddle</option>
+          <option value="autre">Autre</option>
+        </select>
+        <select id="p-contact" aria-label="Coordonnées">
+          <option value="">Toutes les coordonnées</option>
+          <option value="email">Avec email</option>
+          <option value="phone">Avec téléphone</option>
+          <option value="website">Avec site web</option>
+          <option value="none">Sans email ni téléphone</option>
+        </select>
+        <select id="p-sort" aria-label="Tri">
+          <option value="fit">Trier : score</option>
+          <option value="next">Trier : prochaine action</option>
+          <option value="last">Trier : dernier contact</option>
+          <option value="name">Trier : nom</option>
+        </select>
+        <div class="bar__end">
+          <button class="btn btn--small" id="p-add" type="button">+ Ajouter</button>
+          <label class="ghost ghost--dark" title="Colonnes reconnues : nom, email, téléphone, site, ville, département, sport">Importer CSV<input id="p-csv" type="file" accept=".csv,text/csv" hidden></label>
+          <button class="ghost ghost--dark" id="p-osm" type="button">Mettre à jour depuis OSM</button>
+        </div>
+      </section>
+
+      <section class="view">
+        <div class="tablewrap">
+          <table class="table">
+            <thead>
+              <tr><th>Score</th><th>École</th><th>Sport</th><th>Coordonnées</th><th>Statut</th><th>Prochaine action</th><th>Dernier contact</th></tr>
+            </thead>
+            <tbody id="p-rows"></tbody>
+          </table>
+          <p class="empty" id="p-empty" hidden>Aucune école ne correspond à ces filtres.</p>
+          <button class="more" id="p-more" type="button" hidden></button>
+        </div>
+        <p class="attribution">Données écoles et clubs : © contributeurs <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, licence ODbL.</p>
+      </section>
+    </main>
+
+    <!-- Fiche -->
     <div class="scrim" id="scrim" hidden></div>
-    <aside class="drawer" id="drawer" aria-hidden="true">
+    <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Fiche">
       <button class="drawer__close" id="close" type="button" aria-label="Fermer">×</button>
       <div id="detail"></div>
     </aside>
+
+    <!-- Fenêtres -->
+    <dialog class="modal" id="m-add">
+      <form method="dialog" class="modal__body" id="f-add">
+        <h3>Ajouter une école</h3>
+        <label>Nom de l'école *<input name="name" required maxlength="200"></label>
+        <div class="grid2">
+          <label>Email<input name="email" type="email" maxlength="200"></label>
+          <label>Téléphone<input name="phone" maxlength="40"></label>
+        </div>
+        <label>Site web<input name="website" placeholder="ecole-surf.fr" maxlength="300"></label>
+        <div class="grid3">
+          <label>Ville<input name="city" maxlength="120"></label>
+          <label>Département<select name="departement" id="add-dept"><option value="">—</option></select></label>
+          <label>Sport<select name="sport"><option value="surf">Surf</option><option value="voile">Voile</option><option value="kite">Kite</option><option value="paddle">Paddle</option><option value="autre">Autre</option></select></label>
+        </div>
+        <p class="modal__msg" role="alert"></p>
+        <div class="modal__actions">
+          <button class="btn btn--small" value="ok">Ajouter</button>
+          <button class="ghost ghost--dark" value="cancel" formnovalidate>Annuler</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="m-osm">
+      <form method="dialog" class="modal__body" id="f-osm">
+        <h3>Mettre à jour depuis OpenStreetMap</h3>
+        <p class="muted">On récupère les écoles et clubs de glisse département par département. Les écoles déjà présentes ne sont pas modifiées : tes statuts, notes et corrections sont conservés.</p>
+        <label>Région
+          <select name="region" id="osm-region">
+            <option value="bretagne">Bretagne et Loire-Atlantique</option>
+            <option value="landes">Gironde, Landes et Pays basque</option>
+            <option value="med">Méditerranée et Corse</option>
+            <option value="nord">Normandie et Hauts-de-France</option>
+            <option value="charente">Charente et Vendée</option>
+            <option value="other">Intérieur (lacs et rivières), long</option>
+          </select>
+        </label>
+        <ol class="osm-log" id="osm-log"></ol>
+        <p class="modal__msg" role="status"></p>
+        <div class="modal__actions">
+          <button class="btn btn--small" value="ok" id="osm-go">Lancer</button>
+          <button class="ghost ghost--dark" value="cancel" formnovalidate id="osm-close">Fermer</button>
+        </div>
+      </form>
+    </dialog>
 
     <div class="toast" id="toast" role="status"></div>
   </div>
 
   <script src="questions.js"></script>
+  <script src="admin-templates.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>
