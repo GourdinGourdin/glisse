@@ -831,8 +831,8 @@ function bindCommon(kind, rec, tpls, to) {
           [`${kind}_id`]: rec.id,
           type: "email",
           body: `${tpls[k].label} : ${tpls[k].subject}`,
-          next_action_at: plusDays(k === "first" ? 4 : 7),
-          next_action: k === "first" ? "Relancer si pas de réponse" : "Dernière relance ou clore",
+          next_action_at: plusDays(k === "followup" ? 7 : 4),
+          next_action: k === "followup" ? "Dernière relance ou clore" : "Relancer si pas de réponse",
         });
         if (data.record) {
           updateLocal(kind, data.record);

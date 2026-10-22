@@ -194,6 +194,21 @@ function captureForm(cta, withSchool = false) {
     <p class="capture__msg" role="status" aria-live="polite"></p>`;
 }
 
+// Affiche le message personnalisé (Gemini ou texte de secours) sous le formulaire
+function showMessage(box, { subject, body }) {
+  const card = document.createElement("article");
+  card.className = "ai-mail";
+  const head = document.createElement("p");
+  head.className = "ai-mail__subject";
+  head.textContent = subject;
+  const text = document.createElement("div");
+  text.className = "ai-mail__body";
+  text.textContent = body;
+  card.append(head, text);
+  box.append(card);
+  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
 async function submitLead(e) {
   e.preventDefault();
   const form = e.currentTarget;
@@ -212,15 +227,23 @@ async function submitLead(e) {
     return;
   }
 
+  const list = QUESTIONS[state.path];
   const payload = {
     ...Object.fromEntries(new FormData(form)),
     consent: true,
     audience: state.path === "school" ? "ecole" : "pratiquant",
     answers: state.answers,
     result: state.result,
+    // Réponses en clair, pour que le message personnalisé parle des vraies réponses
+    labels: list.map((q) => ({ q: q.q, a: q.options.find((o) => o.value === state.answers[q.id])?.label })).filter((l) => l.a),
   };
 
+  const button = form.querySelector("button");
+  button.disabled = true;
+  msg.textContent = "On prépare ton analyse personnalisée…";
+
   try {
+    let message = null;
     if (FORM_ENDPOINT) {
       const res = await fetch(FORM_ENDPOINT, {
         method: "POST",
@@ -228,15 +251,18 @@ async function submitLead(e) {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(res.statusText);
+      message = (await res.json()).message ?? null;
     } else {
       console.log("Nouveau lead :", payload);
     }
     form.hidden = true;
     msg.textContent = state.path === "school"
-      ? "C'est noté, ton rapport arrive par email."
-      : "C'est noté, on te prévient à l'ouverture.";
+      ? "C'est noté. Voici ton analyse, on te la garde aussi pour l'email."
+      : "C'est noté, tu es sur la liste. Voici ton message personnalisé.";
     msg.classList.add("is-ok");
+    if (message) showMessage(form.closest(".capture"), message);
   } catch {
+    button.disabled = false;
     msg.textContent = "L'envoi n'a pas fonctionné, réessaie dans un instant.";
     msg.classList.add("is-error");
   }

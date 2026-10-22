@@ -1,6 +1,7 @@
 {
   "cleanUrls": true,
   "functions": {
-    "api/admin/prospects.js": { "maxDuration": 60 }
+    "api/admin/prospects.js": { "maxDuration": 60 },
+    "api/lead.js": { "maxDuration": 30 }
   }
 }

@@ -525,3 +525,8 @@ h1 em, h2 em, .footer__big em {
   .offer, .cta-band__inner { padding: 2rem 1.5rem; }
   .waves { height: 120px; }
 }
+
+/* Message personnalisé après le formulaire */
+.ai-mail { background: var(--white); color: var(--ink); border-radius: 18px; padding: 1.25rem 1.4rem; display: grid; gap: .75rem; animation: fade .5s var(--ease); }
+.ai-mail__subject { font-family: var(--display); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; color: var(--ink) !important; }
+.ai-mail__body { white-space: pre-line; font-size: .95rem; line-height: 1.6; color: var(--ink-soft); }

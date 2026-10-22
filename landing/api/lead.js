@@ -1,5 +1,6 @@
 // POST /api/lead : enregistre un lead envoyé par le quiz de la landing.
 
+import { leadEmail } from "./_gemini.js";
 import { db, readBody, relink, send } from "./_lib.js";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -20,10 +21,18 @@ export default async function handler(req, res) {
 
   const school = audience === "ecole" ? String(body.school ?? "").trim().slice(0, 120) || null : null;
 
+  // Réponses en clair (question + réponse) envoyées par la page, utilisées seulement pour rédiger le message
+  const labels = (Array.isArray(body.labels) ? body.labels : [])
+    .slice(0, 15)
+    .map((l) => ({ q: String(l?.q ?? "").slice(0, 160), a: String(l?.a ?? "").slice(0, 120) }))
+    .filter((l) => l.q && l.a);
+
   // Refaire le test met à jour les réponses sans toucher au statut, aux notes ni au nom d'école déjà connu
-  const { error } = await db()
+  const { data: lead, error } = await db()
     .from("leads")
-    .upsert({ email, audience, consent: true, answers, ...(school && { school }) }, { onConflict: "email,audience" });
+    .upsert({ email, audience, consent: true, answers, ...(school && { school }) }, { onConflict: "email,audience" })
+    .select("id, school")
+    .single();
 
   if (error) {
     console.error("lead insert failed:", error.message);
@@ -33,5 +42,13 @@ export default async function handler(req, res) {
   // Une école démarchée qui fait le quiz est reliée à sa fiche de prospection
   if (audience === "ecole") await relink().catch((err) => console.error("prospect link failed:", err.message));
 
-  send(res, 200, { ok: true });
+  // Message personnalisé : Gemini, ou texte de secours. Il est montré tout de suite au visiteur et gardé sur le lead.
+  const message = await leadEmail({ audience, school: lead.school, labels, result: answers.result ?? {} });
+  const { error: saveError } = await db()
+    .from("leads")
+    .update({ ai_subject: message.subject, ai_body: message.body, ai_source: message.source, ai_at: new Date().toISOString() })
+    .eq("id", lead.id);
+  if (saveError) console.error("ai message save failed:", saveError.message);
+
+  send(res, 200, { ok: true, message: { subject: message.subject, body: message.body } });
 }

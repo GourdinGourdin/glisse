@@ -79,3 +79,9 @@ alter table leads enable row level security;   -- aucune policy : seul le serveu
 alter table emails enable row level security;
 alter table prospects enable row level security;
 alter table activities enable row level security;
+
+-- Message personnalisé généré pour le lead (Gemini, ou texte de secours si l'IA échoue)
+alter table leads add column if not exists ai_subject text;
+alter table leads add column if not exists ai_body text;
+alter table leads add column if not exists ai_source text check (ai_source in ('gemini', 'fallback'));
+alter table leads add column if not exists ai_at timestamptz;

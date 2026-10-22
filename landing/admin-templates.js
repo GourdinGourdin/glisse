@@ -103,7 +103,17 @@ Sinon : « Je vous envoie un email avec le lien du diagnostic, à quelle adresse
 
 /* ---------- Leads (tutoiement, comme la landing ; textes d'AGENTS.md) ---------- */
 
+// Le message personnalisé généré à l'arrivée du lead passe en premier
 function leadTemplates(lead) {
+  const base = baseLeadTemplates(lead);
+  if (!lead.ai_body) return base;
+  return {
+    ai: { label: lead.ai_source === "gemini" ? "Message Gemini" : "Message (secours)", subject: lead.ai_subject, body: lead.ai_body },
+    ...base,
+  };
+}
+
+function baseLeadTemplates(lead) {
   const a = lead.answers ?? {};
   const r = a.result ?? {};
   if (lead.audience === "ecole") {
