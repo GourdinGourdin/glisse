@@ -530,3 +530,12 @@ h1 em, h2 em, .footer__big em {
 .ai-mail { background: var(--white); color: var(--ink); border-radius: 18px; padding: 1.25rem 1.4rem; display: grid; gap: .75rem; animation: fade .5s var(--ease); }
 .ai-mail__subject { font-family: var(--display); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; color: var(--ink) !important; }
 .ai-mail__body { white-space: pre-line; font-size: .95rem; line-height: 1.6; color: var(--ink-soft); }
+
+/* Réponses libres du diagnostic */
+.free { display: grid; gap: .75rem; }
+.free__input { width: 100%; font: inherit; font-size: 1.05rem; line-height: 1.5; padding: 1rem 1.15rem; border-radius: 16px; border: 2px solid transparent; background: var(--foam); color: var(--ink); resize: vertical; min-height: 130px; transition: border-color .15s; }
+.free__input:focus { outline: none; border-color: var(--ink); }
+.free__foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.free__count { font-size: .85rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.free__next:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.quiz__options:has(.free) { display: block; }

@@ -78,13 +78,16 @@ let pLimit = 200;
 
 function label(audience, id, value) {
   const list = QUESTIONS[audience === "ecole" ? "school" : "rider"];
-  const opt = list.find((x) => x.id === id)?.options.find((o) => o.value === value);
+  const opt = list.find((x) => x.id === id)?.options?.find((o) => o.value === value);
   return opt ? opt.label : value;
 }
 
 // Score de priorité sur 100 : à qui écrire ou téléphoner en premier
+// Leads aux réponses libres : score donné par Gemini. Anciens leads (choix multiples) : calcul d'origine.
 function priority(lead) {
+  if (lead.ai_priority != null) return lead.ai_priority;
   const a = lead.answers ?? {};
+  if (!a.tool && !a.goal) return 50;
   let p = 0;
   if (lead.audience === "ecole") {
     p += { paper: 30, phone: 30, sheet: 20, software: 0 }[a.tool] ?? 0;
@@ -105,6 +108,7 @@ const heat = (p) => (p >= 65 ? "hot" : p >= 40 ? "warm" : "cold");
 const HEAT = { hot: "Chaud", warm: "Tiède", cold: "Froid" };
 
 function summary(lead) {
+  if (lead.ai_summary) return lead.ai_summary;
   const r = lead.answers?.result ?? {};
   if (lead.audience === "ecole") return r.revenue ? `${euro(r.revenue)} récupérables · ${r.hours ?? "?"} h/sem` : "—";
   return r.level ? `${r.level} · ${r.formatName ?? ""}` : "—";
@@ -902,7 +906,11 @@ function renderLeadDetail(lead) {
     ${statusBlock(STATUS, lead.status)}
     ${nextBlock(lead)}
 
-    <div class="d__block">
+    ${lead.ai_summary || !r.score && !r.level ? `<div class="d__block">
+      <h4>Analyse Gemini</h4>
+      <p class="d__summary">${lead.ai_summary ? esc(lead.ai_summary) : `<span class="muted">${lead.ai_source === "fallback" ? "Gemini n'a pas répondu à l'arrivée du lead : texte de secours utilisé, à personnaliser." : "Pas d'analyse."}</span>`}</p>
+    </div>` : ""}
+    <div class="d__block"${r.score || r.level ? "" : " hidden"}>
       <h4>Résultat du test</h4>
       <div class="d__minis">${result}</div>
       ${r.recos?.length ? `<ol class="d__recos">${r.recos.map((t) => `<li>${esc(t)}</li>`).join("")}</ol>` : ""}

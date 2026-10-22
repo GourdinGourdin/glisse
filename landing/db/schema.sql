@@ -85,3 +85,7 @@ alter table leads add column if not exists ai_subject text;
 alter table leads add column if not exists ai_body text;
 alter table leads add column if not exists ai_source text check (ai_source in ('gemini', 'fallback'));
 alter table leads add column if not exists ai_at timestamptz;
+
+-- Qualification du lead par Gemini à partir des réponses libres
+alter table leads add column if not exists ai_priority int check (ai_priority between 0 and 100);
+alter table leads add column if not exists ai_summary text;

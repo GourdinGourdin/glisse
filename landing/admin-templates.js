@@ -109,7 +109,7 @@ function leadTemplates(lead) {
   if (!lead.ai_body) return base;
   return {
     ai: { label: lead.ai_source === "gemini" ? "Message Gemini" : "Message (secours)", subject: lead.ai_subject, body: lead.ai_body },
-    ...base,
+    followup: { ...base.followup, subject: `Re: ${lead.ai_subject}` },
   };
 }
 
