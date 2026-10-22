@@ -118,19 +118,89 @@ function captureForm(cta, withSchool = false) {
     <p class="capture__msg" role="status" aria-live="polite"></p>`;
 }
 
-// Affiche le message personnalisé (Gemini ou texte de secours) sous le formulaire
-function showMessage(box, { subject, body }) {
-  const card = document.createElement("article");
-  card.className = "ai-mail";
-  const head = document.createElement("p");
-  head.className = "ai-mail__subject";
-  head.textContent = subject;
-  const text = document.createElement("div");
-  text.className = "ai-mail__body";
-  text.textContent = body;
-  card.append(head, text);
-  box.append(card);
-  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+/* ---------- Analyse personnalisée ---------- */
+
+const escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+// Mise en forme du texte de Gemini : titres "## ", puces "- " et **gras** seulement (le reste est échappé)
+function renderAnalysis(text) {
+  const inline = (t) => escapeHtml(t).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  let html = "";
+  let list = false;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    const bullet = line.match(/^[-*•] +(.*)$/);
+    if (list && !bullet) {
+      html += "</ul>";
+      list = false;
+    }
+    if (!line) continue;
+    if (line.startsWith("## ")) html += `<h4>${inline(line.slice(3))}</h4>`;
+    else if (bullet) {
+      if (!list) html += "<ul>";
+      list = true;
+      html += `<li>${inline(bullet[1])}</li>`;
+    } else html += `<p>${inline(line)}</p>`;
+  }
+  return html + (list ? "</ul>" : "");
+}
+
+function reportCard(email) {
+  const school = state.path === "school";
+  resultBox.innerHTML = `
+    <article class="report">
+      <header class="report__head">
+        <span class="report__badge"><span class="pulse"></span> Analyse personnalisée</span>
+        <h3>${school ? "Ton diagnostic Glisse" : "Ton plan pour (enfin) aller à l'eau"}</h3>
+        <p>Préparé pour ${escapeHtml(email)}, à partir de tes réponses.</p>
+      </header>
+      <div class="report__body" aria-live="polite">
+        <div class="report__loading"><span></span><span></span><span></span> Victor lit tes réponses…</div>
+      </div>
+      <footer class="report__foot" hidden>
+        <button type="button" class="btn btn--small report__copy">Copier mon analyse</button>
+        ${navigator.share ? `<button type="button" class="btn btn--line btn--small report__share">${school ? "L'envoyer à mon équipe" : "Partager"}</button>` : ""}
+        <button type="button" class="result__restart">Refaire le test</button>
+      </footer>
+    </article>`;
+  resultBox.querySelector(".result__restart").addEventListener("click", () => show("start"));
+  return resultBox.querySelector(".report");
+}
+
+// Lit le flux NDJSON de /api/lead et affiche le texte au fur et à mesure
+async function streamAnalysis(res, card) {
+  const body = card.querySelector(".report__body");
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let text = "";
+  let frame = 0;
+  const paint = (done) => {
+    body.innerHTML = renderAnalysis(text) + (done ? "" : '<span class="report__caret"></span>');
+  };
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let i;
+    while ((i = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, i);
+      buffer = buffer.slice(i + 1);
+      if (!line.trim()) continue;
+      const event = JSON.parse(line);
+      if (event.t === "text") {
+        text += event.v;
+        if (!frame) frame = requestAnimationFrame(() => ((frame = 0), paint(false)));
+      }
+      if (event.t === "end") {
+        cancelAnimationFrame(frame);
+        paint(true);
+        return text;
+      }
+    }
+  }
+  paint(true);
+  return text;
 }
 
 async function submitLead(e) {
@@ -146,7 +216,7 @@ async function submitLead(e) {
   }
 
   if (!form.elements.consent.checked) {
-    msg.textContent = "Coche la case pour recevoir ton résultat par email.";
+    msg.textContent = "Coche la case pour recevoir ton analyse.";
     msg.classList.add("is-error");
     return;
   }
@@ -163,32 +233,53 @@ async function submitLead(e) {
 
   const button = form.querySelector("button");
   button.disabled = true;
-  msg.textContent = "On prépare ton analyse personnalisée…";
 
-  try {
-    let message = null;
-    if (FORM_ENDPOINT) {
-      const res = await fetch(FORM_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(res.statusText);
-      message = (await res.json()).message ?? null;
-    } else {
-      console.log("Nouveau lead :", payload);
-    }
-    form.hidden = true;
-    msg.textContent = state.path === "school"
-      ? "C'est noté. Voici ton analyse personnalisée :"
-      : "C'est noté, tu es sur la liste. Voici ton conseil personnalisé :";
-    msg.classList.add("is-ok");
-    if (message) showMessage(form.closest(".capture"), message);
-  } catch {
-    button.disabled = false;
-    msg.textContent = "L'envoi n'a pas fonctionné, réessaie dans un instant.";
-    msg.classList.add("is-error");
+  if (!FORM_ENDPOINT) {
+    console.log("Nouveau lead :", payload);
+    return;
   }
+
+  let res;
+  try {
+    res = await fetch(FORM_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/x-ndjson" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? res.statusText);
+  } catch (err) {
+    button.disabled = false;
+    msg.textContent = err.message && err.message !== "Failed to fetch" ? err.message : "L'envoi n'a pas fonctionné, réessaie dans un instant.";
+    msg.classList.add("is-error");
+    return;
+  }
+
+  // Le lead est enregistré : on remplace le formulaire par l'analyse, écrite en direct
+  const card = reportCard(payload.email);
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+  let text = "";
+  try {
+    text = await streamAnalysis(res, card);
+  } catch {
+    if (!card.querySelector(".report__body p")) {
+      card.querySelector(".report__body").innerHTML = "<p>Ton analyse a bien été enregistrée, mais l'affichage a été interrompu. Victor te la renvoie personnellement très vite.</p>";
+    }
+  }
+
+  const foot = card.querySelector(".report__foot");
+  foot.hidden = false;
+  const plain = text.replace(/^## +/gm, "").replace(/\*\*/g, "");
+  foot.querySelector(".report__copy").addEventListener("click", async (ev) => {
+    try {
+      await navigator.clipboard.writeText(plain);
+      ev.currentTarget.textContent = "Copié ✓";
+    } catch {
+      ev.currentTarget.textContent = "Copie impossible";
+    }
+  });
+  foot.querySelector(".report__share")?.addEventListener("click", () => {
+    navigator.share({ title: "Mon diagnostic Glisse", text: plain }).catch(() => {});
+  });
 }
 
 /* ---------- Branchements ---------- */

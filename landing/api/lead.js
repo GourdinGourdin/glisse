@@ -1,6 +1,7 @@
-// POST /api/lead : enregistre un lead envoyé par le quiz de la landing.
+// POST /api/lead : enregistre un lead envoyé par le diagnostic, puis renvoie son analyse personnalisée en direct.
+// Réponse en NDJSON (une ligne JSON par événement) : {"t":"text","v":"…"} au fil de l'écriture, puis {"t":"end"}.
 
-import { leadEmail } from "./_gemini.js";
+import { defaultSubject, feedbackStream, qualify, toEmail } from "./_gemini.js";
 import { db, readBody, relink, send } from "./_lib.js";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -44,23 +45,34 @@ export default async function handler(req, res) {
     return send(res, 500, { error: "Enregistrement impossible" });
   }
 
-  // Une école démarchée qui fait le quiz est reliée à sa fiche de prospection
-  if (audience === "ecole") await relink().catch((err) => console.error("prospect link failed:", err.message));
+  // Analyse en direct : chaque morceau de texte part vers la page dès qu'il est écrit
+  res.status(200);
+  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Accel-Buffering", "no");
+  const emit = (event) => res.write(`${JSON.stringify(event)}\n`);
 
-  // Message personnalisé : Gemini, ou texte de secours. Il est montré tout de suite au visiteur et gardé sur le lead.
-  const message = await leadEmail({ audience, school: lead.school, labels });
+  const input = { audience, school: lead.school, labels };
+  const feedback = await feedbackStream(input, (v) => emit({ t: "text", v }));
+  emit({ t: "end", source: feedback.source });
+
+  // Ensuite, sans faire attendre le visiteur : qualification, enregistrement, lien avec la prospection
+  const q = feedback.source === "gemini" ? await qualify(input, feedback.text) : { subject: null, priority: null, summary: null };
   const { error: saveError } = await db()
     .from("leads")
     .update({
-      ai_subject: message.subject,
-      ai_body: message.body,
-      ai_source: message.source,
-      ai_priority: message.priority,
-      ai_summary: message.summary,
+      ai_subject: q.subject ?? defaultSubject(input),
+      ai_body: toEmail(feedback.text),
+      ai_source: feedback.source,
+      ai_priority: q.priority,
+      ai_summary: q.summary,
       ai_at: new Date().toISOString(),
     })
     .eq("id", lead.id);
   if (saveError) console.error("ai message save failed:", saveError.message);
 
-  send(res, 200, { ok: true, message: { subject: message.subject, body: message.body } });
+  // Une école démarchée qui fait le diagnostic est reliée à sa fiche de prospection
+  if (audience === "ecole") await relink().catch((err) => console.error("prospect link failed:", err.message));
+
+  res.end();
 }
