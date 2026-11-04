@@ -45,3 +45,13 @@ Les leads arrivent avec les réponses au diagnostic et le résultat calculé. Po
 ## Prochaines étapes
 
 Voir [docs/roadmap.md](docs/roadmap.md).
+
+## Livrables du cours
+
+- **URL** : https://glisse.vercel.app (CRM : `/admin`)
+- **Dépôt** : ce dépôt ; règles et architecture dans `AGENTS.md`
+- **Leads de test** : adresses `demo-*@example.com` dans le CRM (jamais d'envoi réel vers ce domaine)
+- **Coût par exécution** : onglet *Machine* du CRM, mesuré sur les vrais appels
+- **Clic humain** : relance et email bloqué par un contrôle attendent « Valider et envoyer » dans *À faire*
+- **Cas qui cassent** : lead piégé (modèle non appelé, score 10, email retenu), chiffre inventé par le modèle (email retenu), Gemini en panne (second modèle puis texte de secours), Gmail illisible (aucune relance)
+- **Tests** : `cd landing && npm test`

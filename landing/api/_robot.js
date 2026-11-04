@@ -48,7 +48,7 @@ export async function runRobot({
   } catch (err) {
     // Sans lecture de la boîte, on ne peut pas savoir qui a répondu : aucune relance
     summary.errors.push(`Lecture de la boîte : ${err.message}`);
-    await logRun({ kind: "robot", status: "error", duration_ms: Date.now() - started, detail: JSON.stringify(summary).slice(0, 500) });
+    if (!onlyLeadId) await logRun({ kind: "robot", status: "error", duration_ms: Date.now() - started, detail: JSON.stringify(summary).slice(0, 500) });
     return summary;
   }
 
@@ -79,7 +79,7 @@ export async function runRobot({
 
       if (decision.action === "followup") {
         const email = await writer(lead);
-        await logRun({ kind: "followup", status: email.source === "gemini" ? "ok" : "fallback", lead_id: lead.id, model: email.model, tokens_in: email.tokensIn, tokens_out: email.tokensOut, cost_usd: email.cost, duration_ms: email.ms });
+        if (!onlyLeadId) await logRun({ kind: "followup", status: email.source === "gemini" ? "ok" : "fallback", lead_id: lead.id, model: email.model, tokens_in: email.tokensIn, tokens_out: email.tokensOut, cost_usd: email.cost, duration_ms: email.ms });
         if (auto) {
           await sendEmail(lead, { subject: email.subject, body: email.body, kind: "followup" }, { transport });
           summary.followUpsSent++;
@@ -94,6 +94,6 @@ export async function runRobot({
     }
   }
 
-  await logRun({ kind: "robot", status: summary.errors.length ? "error" : "ok", duration_ms: Date.now() - started, detail: JSON.stringify(summary).slice(0, 500) });
+  if (!onlyLeadId) await logRun({ kind: "robot", status: summary.errors.length ? "error" : "ok", duration_ms: Date.now() - started, detail: JSON.stringify(summary).slice(0, 500) });
   return summary;
 }

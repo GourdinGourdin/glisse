@@ -5,10 +5,10 @@
 Glisse: booking and management platform for surf and sailing schools (later: kitesurf, paddle, wing…).
 Landing page in `landing/` (static HTML/CSS/JS), live on https://glisse.vercel.app.
 
-•  *What our lead magnet does*: a 2-minute diagnostic quiz with an instant result. Two paths:
-   - **Pratiquant (rider)**: gets their level and the type of course that fits them, in their region.
-   - **École (school)**: gets an estimate of what its current way of handling bookings costs it
-     (time lost on the phone, empty spots, lost revenue), plus a report by email.
+•  *What our lead magnet does*: a 2-minute diagnostic with open questions and a personal analysis written live by an LLM. Two paths:
+   - **Pratiquant (rider)**: 5 questions; gets their profile, the course that fits them and 3 tips.
+   - **École (school)**: 6 questions; gets what its answers reveal, a 3-step action plan and what Glisse changes.
+   A chatbot (`chat.js`, `api/chat.js`) answers questions on every public page.
 •  *Who it is for*:
    - **Schools (priority)**: surf, sailing and kitesurf schools in France (Bretagne, Landes/Pays basque,
      Méditerranée, Normandie/Nord, Charente/Vendée) still managing bookings on paper, Excel or by phone.
@@ -16,12 +16,8 @@ Landing page in `landing/` (static HTML/CSS/JS), live on https://glisse.vercel.a
 •  *What we want from a lead*:
    - School: a demo call (`DEMO_URL`) and, ultimately, signing up as a pilot school.
    - Rider: joining the waiting list (first 100 sign-ups get a free course).
-•  *What our form collects*: `email` (required), `school` (school name, school path only), `audience`
-   (`ecole` | `pratiquant`), plus the quiz answers and computed result, saved in `answers`:
-   - rider: `sport`, `sessions`, `skill`, `goal`, `format`, `region`
-   - school: `sport`, `region`, `courses`, `tool`, `calls`, `empty`, `price`, `visibility`, `season`
-   - `result`: the computed result shown to the visitor
-   - `consent`: required checkbox « J'accepte de recevoir des emails de Glisse ».
+•  *What our form collects*: `email` (required), `school` (school path only), `audience` (`ecole` | `pratiquant`),
+   the free-text answers in `answers` (ids in `landing/questions.js`), and the required `consent` checkbox.
 •  *A good lead for us*: a surf school in the Landes, 30–60 courses a week, managed by phone and Excel,
    3–4 empty spots per course, that left its school name.
    · *A lead we ignore*: a school that already uses booking software and is almost always full, or a
@@ -62,6 +58,8 @@ which refuses any call without `Authorization: Bearer <CRON_SECRET>`.
 | `ADMIN_PASSWORD` | We choose it, you set it | Login of `/admin`. |
 | `CRON_SECRET` | You generate it (long random text) | Vercel sends it to the robot route. |
 | `FOLLOW_UP_DAYS` | You, 3 by default | Days without reply before the follow-up; 0 to test. |
+| `GEMINI_API_KEY` | We create it, you set it | LLM calls, server routes only. |
+| `AUTO_FOLLOW_UP` | Optional, unset by default | `1` sends the follow-up without the human click. |
 
 `.env.local` stays in `.gitignore`. After changing a variable in Vercel, redeploy.
 
@@ -104,7 +102,7 @@ The full, current schema is `landing/db/schema.sql` (idempotent: safe to run aga
 
 ## CRM and prospecting · YOURS
 
-`/admin` (protected by `ADMIN_PASSWORD`) has three tabs:
+`/admin` (protected by `ADMIN_PASSWORD`) has four tabs:
 
 •  *À faire*: overdue, today and next-7-days actions (leads + prospects), plus suggestions (hot new leads, best schools to call).
 •  *Leads*: quiz leads, priority score /100, list + drag-and-drop pipeline, funnel, lead sheet with answers, next action,
@@ -113,6 +111,8 @@ The full, current schema is `landing/db/schema.sql` (idempotent: safe to run aga
    Fit score /100, statuses `to_contact → contacted → interested → pilot | not_interested`, "find email" on the school's
    website, first email / follow-up / call script templates (vouvoiement, identity + STOP line for CNIL B2B rules).
 
+•  *Machine*: anonymous funnel (`events`), cost per lead and cost line by line, errors and capped runs (`runs`), robot status and « Run robot now ».
+
 Rules:
 •  Prospecting emails are written and sent *by hand*, one school at a time. No bulk sending (out of scope).
 •  Logging an activity on a *lead* never changes its status: the follow-up robot relies on `status` and `last_email_at`.
@@ -120,76 +120,17 @@ Rules:
    (personal mailboxes like gmail.com are ignored); it then moves to `interested`.
 •  OSM import runs one département per request (`api/_osm.js`, Overpass API, can be slow or down: retry later).
    Re-importing never overwrites existing prospects.
-•  Server routes: `api/lead.js`, `api/admin/{login,leads,prospects,activities}.js` (Vercel Hobby: max 12 functions).
+•  Server routes: `api/{lead,chat,track,robot}.js`, `api/admin/{login,leads,prospects,activities,emails,stats}.js` (10 of the 12 functions Vercel Hobby allows).
 
 ## Emails · KEEP the settings, YOURS the words
 
 •  *KEEP*: sent from `"Glisse" <GMAIL_USER>`, plain text plus a short HTML version, one line saying why the
   person receives it, only to leads with `consent = true`, at most 100 emails a day, tested on our own addresses first.
   Every email sent or received is saved in `emails`, and email 1 moves the lead to `contacted` with `last_email_at`.
-•  *YOURS · Tone*: French, « tu » (like the landing), short, warm, signed « Victor, fondateur de Glisse ».
-   Variables in `{…}` come from the lead (`answers.result`). Never change the texts without our OK.
-•  *YOURS · Email 1 · École* (sent right after the quiz)
-   - Subject: `Ton diagnostic Glisse : {revenue} récupérables par saison`
-   - Body:
-     ```
-     Salut,
-
-     Merci d'avoir fait le diagnostic Glisse{ pour {school}}. Voici ton résultat :
-
-     - Score de gestion : {score}/100 ({status})
-     - {hours} h par semaine passées sur l'administratif, soit {seasonHours} h sur la saison
-     - Environ {revenue} de chiffre d'affaires récupérable par saison
-
-     Nos 3 conseils pour ton école :
-     1. {reco1}
-     2. {reco2}
-     3. {reco3}
-
-     On construit Glisse avec quelques écoles pilotes : réservation en ligne, planning des
-     moniteurs et gestion des places, sans Excel ni téléphone. C'est gratuit pour les écoles pilotes.
-
-     Ça te dit qu'on en parle 15 minutes ? Réponds simplement à cet email{ ou choisis un créneau : {DEMO_URL}}.
-
-     Victor, fondateur de Glisse
-     ```
-•  *YOURS · Email 1 · Pratiquant*
-   - Subject: `Bienvenue sur Glisse : ton cours de {sport} t'attend`
-   - Body:
-     ```
-     Salut,
-
-     Merci d'avoir fait le test ! Ton niveau : {level}. Le cours qui te correspond : {course}.
-
-     Tu es sur la liste d'attente de Glisse. On te prévient dès qu'on ouvre les réservations
-     {where}, et si tu fais partie des 100 premiers inscrits, ton premier cours est offert.
-
-     Une question pour nous aider : quand comptes-tu aller à l'eau ? Réponds juste à cet email.
-
-     Victor, fondateur de Glisse
-     ```
-•  *YOURS · The follow-up* (one only, `FOLLOW_UP_DAYS` days later, subject « Re: » + email 1 subject)
-   - École:
-     ```
-     Salut,
-
-     Je reviens vers toi suite à ton diagnostic. Les écoles qui ressemblent à la tienne perdent
-     surtout du temps au téléphone en pleine saison : c'est exactement ce que Glisse règle.
-
-     15 minutes cette semaine ou la suivante, ça te va ? Une simple réponse « oui » suffit et je
-     te propose un créneau.
-
-     Victor
-     ```
-   - Pratiquant:
-     ```
-     Salut,
-
-     Petit rappel : tu es bien sur la liste d'attente Glisse, ton cours offert est réservé si tu
-     fais partie des 100 premiers. Tu connais quelqu'un que ça intéresserait ? Transfère-lui cet email.
-
-     Victor
-     ```
+•  *YOURS · Tone*: French, « tu », warm and direct, signed « Victor, fondateur de Glisse ». The site says the text is written by an AI.
+•  *YOURS · Email 1*: the analysis the visitor just read on the page (`api/_gemini.js`, `toEmail`), with a subject from the LLM.
+   It leaves at once only on a lead's first test and only if every check passes; otherwise it waits in *À faire › Emails à valider*.
+•  *YOURS · The follow-up*: written by the LLM from the answers (fixed text in `api/_gemini.js` if it fails), subject « Re: » + email 1 subject.
 •  *Why you receive it* (footer, every email): « Tu reçois cet email parce que tu as fait le test sur
    glisse.vercel.app. Réponds STOP pour ne plus rien recevoir. » A reply « STOP » sets `status = 'lost'`.
 
@@ -201,14 +142,26 @@ At every run:
 2. Over IMAP, look for an email *from* the lead's address received after `last_email_at`. IMAP `SINCE` works by
    day: filter on the message date after fetching.
 3. Reply found: save it in `emails` (`direction = 'in'`), set `status = 'replied'`. The robot never writes to this lead again.
-4. No reply, `status = 'contacted'`, `last_email_at` older than `FOLLOW_UP_DAYS` days: send *one* follow-up
-   (same subject with « Re: »), save it, set `status = 'followed_up'`, `follow_ups = 1`, `last_email_at = now()`.
+4. No reply, `status = 'contacted'`, `last_email_at` older than `FOLLOW_UP_DAYS` days: prepare *one* follow-up as a draft
+   (same subject with « Re: »). A person clicks « Valider et envoyer » in the CRM (or `AUTO_FOLLOW_UP=1` sends it): it is saved,
+   then `status = 'followed_up'`, `follow_ups = 1`, `last_email_at = now()`.
 5. Never a second follow-up, never after a reply: running the robot twice in a row sends nothing more.
 6. Return a summary: leads checked, replies found, follow-ups sent, errors.
 
 Scheduled once a day in `vercel.json` (`"schedule": "0 7 * * *"` is 7:00 UTC, 9:00 in Paris), with a « Run robot
 now » button in `/admin` for tests.
 
+## The LLM · YOURS
+
+Fixed path set by the code: checks → model → checks → save → send or wait for the human click (`api/lead.js`, `api/_guards.js`).
+
+•  Instructions live in `systemInstruction`; visitor text stays data, inside `<reponses>` tags.
+•  Before the model: injection patterns skip the LLM and use the fallback text; too-short answers and disposable emails raise flags.
+•  After the model: a link, a leaked instruction, a figure absent from the answers or a cut-off text raises a flag. The code caps the LLM's priority.
+•  Any flag holds email 1 for a human. The text on the page streams live, so output checks protect the email, not the screen.
+•  Budget: per-IP hourly limits and 1000 LLM calls a day, then the fallback. Each call is logged in `runs` with tokens, cost and duration.
+•  The chat is not stored. `npm test` in `landing/` runs the test cases (no real email leaves).
+
 ## Out of scope today · KEEP
 
-The LLM (Thursday), mass emailing, open tracking, any paid service.
+Mass emailing, open tracking, any paid service.

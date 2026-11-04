@@ -32,7 +32,10 @@ test("parcours complet sur la base", { skip: !hasDb }, async (t) => {
   const email = `robot-${Date.now()}@example.com`;
   const { data: lead, error } = await db().from("leads").insert({ email, audience: "ecole", consent: true, ai_subject: "Ton diagnostic" }).select().single();
   assert.equal(error, null);
-  t.after(() => db().from("leads").delete().eq("id", lead.id));
+  t.after(async () => {
+    await db().from("runs").delete().eq("lead_id", lead.id);
+    await db().from("leads").delete().eq("id", lead.id);
+  });
   const run = (mailbox = box()) => runRobot({ mailbox, transport, writer, now, followDays: 3, auto: false, onlyLeadId: lead.id });
   const fresh = async () => (await db().from("leads").select("*").eq("id", lead.id).single()).data;
 

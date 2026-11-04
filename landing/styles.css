@@ -605,7 +605,7 @@ h1 em, h2 em, .footer__big em {
 }
 
 /* Note sous l'analyse */
-.report__legal { font-size: .8rem; color: var(--ink-soft); margin-top: .8rem; }
-.report__mail { font-size: .92rem; color: var(--ocean); font-weight: 500; margin-top: .8rem; }
+.report__legal { font-size: .8rem; color: var(--ink-soft); padding: 0 1.75rem 1.4rem; }
+.report__mail { font-size: .92rem; color: var(--ocean); font-weight: 500; padding: 0 1.75rem 1rem; }
 .report__mail:empty { display: none; }
 .capture__why { font-size: .84rem; color: var(--ink-soft); margin-top: .55rem; }
