@@ -83,30 +83,7 @@ function label(audience, id, value) {
   return opt ? opt.label : value;
 }
 
-// Score de priorité sur 100 : à qui écrire ou téléphoner en premier
-// Leads aux réponses libres : score donné par Gemini. Anciens leads (choix multiples) : calcul d'origine.
-function priority(lead) {
-  if (lead.ai_priority != null) return lead.ai_priority;
-  const a = lead.answers ?? {};
-  if (!a.tool && !a.goal) return 50;
-  let p = 0;
-  if (lead.audience === "ecole") {
-    p += { paper: 30, phone: 30, sheet: 20, software: 0 }[a.tool] ?? 0;
-    p += { 40: 20, 22: 15, 10: 8, 3: 2 }[a.calls] ?? 0;
-    const rev = a.result?.revenue ?? 0;
-    p += rev >= 15000 ? 30 : rev >= 7000 ? 22 : rev >= 3000 ? 12 : 4;
-    p += { 75: 10, 45: 8, 20: 4, 6: 0 }[a.courses] ?? 0;
-    if (lead.school) p += 10;
-  } else {
-    p += { camp: 40, regular: 35, level: 25, try: 15 }[a.goal] ?? 0;
-    p += { camp: 25, private: 20, group: 10, any: 10 }[a.format] ?? 0;
-    p += (a.sessions ?? 0) * 5 + 10;
-  }
-  return Math.min(100, p);
-}
-
 const heat = (p) => (p >= 65 ? "hot" : p >= 40 ? "warm" : "cold");
-const HEAT = { hot: "Chaud", warm: "Tiède", cold: "Froid" };
 
 function summary(lead) {
   if (lead.ai_summary) return lead.ai_summary;
@@ -207,7 +184,11 @@ async function load() {
     if (!/Session/.test(err.message)) toast(err.message, true);
   }
 }
-const withPriority = (l) => ({ ...l, priority: priority(l) });
+// La note de compatibilité (scoring.js) sert aussi à trier : à qui écrire ou téléphoner en premier
+const withPriority = (l) => {
+  const fit = scoreLead(l);
+  return { ...l, fit, priority: fit.score };
+};
 
 $("#refresh").addEventListener("click", async () => {
   await load();
@@ -269,7 +250,7 @@ function filteredLeads() {
     (l) =>
       (!aud || l.audience === aud) &&
       (!st || l.status === st) &&
-      (!reg || l.answers?.region === reg) &&
+      (!reg || l.fit.region === reg) &&
       (!q || [l.email, l.school, l.name, l.notes, l.next_action].some((v) => norm(v).includes(q)))
   );
   const byDate = (a, b) => new Date(b.created_at) - new Date(a.created_at);
@@ -323,9 +304,16 @@ const FLAGS = {
 };
 
 const pill = (map, status) => `<span class="pill pill--${map[status].tone}">${map[status].label}</span>`;
-const score = (p, title) => `<span class="score score--${heat(p)}" title="${title ?? HEAT[heat(p)]}">${p}</span>`;
+const score = (p, title) => `<span class="score score--${heat(p)}" title="${title ?? ""}">${p}</span>`;
+
+// Note de compatibilité d'un lead : anneau seul, ou anneau et libellé
+const fitTitle = (l) => `${l.fit.label} : ${l.fit.score}/100\n${l.fit.rows.map((r) => `${r.label} ${r.points}/${r.max}`).join("\n")}${l.fit.notes.length ? `\n${l.fit.notes.join("\n")}` : ""}`;
+const fitRing = (l) => `<span class="fit__ring fit__ring--${l.fit.level}" style="--p:${l.fit.score}" title="${esc(fitTitle(l))}"><b>${l.fit.score}</b></span>`;
+const fitBadge = (l) => `<span class="fit">${fitRing(l)}<span class="fit__label fit__label--${l.fit.level}">${l.fit.label}</span></span>`;
 const tag = (l) => `<span class="tag tag--${l.audience}">${l.audience === "ecole" ? "École" : "Pratiquant"}</span>`;
-const who = (l) => `<b>${esc(leadName(l))}</b>${l.school || l.name ? `<small>${esc(l.email)}</small>` : ""}`;
+// Un email long passe à la ligne avant le @, pas au milieu d'un mot
+const breakable = (s) => esc(s).replace(/@/g, "<wbr>@");
+const who = (l) => `<b>${breakable(leadName(l))}</b>${l.school || l.name ? `<small>${breakable(l.email)}</small>` : ""}`;
 
 function kpis(target, cards) {
   $(target).innerHTML = cards.map((c) => `<div class="kpi${c.hot ? " kpi--hot" : ""}"><b>${c.n}</b><span>${c.l}</span></div>`).join("");
@@ -359,7 +347,7 @@ function renderLeads() {
     { n: leads.filter((l) => new Date(l.created_at) > week).length, l: "cette semaine" },
     { n: schools.length, l: "écoles" },
     { n: leads.length - schools.length, l: "pratiquants" },
-    { n: open.filter((l) => heat(l.priority) === "hot").length, l: "leads chauds en cours", hot: true },
+    { n: open.filter((l) => l.fit.score >= 55).length, l: "leads compatibles en cours", hot: true },
     { n: leads.filter((l) => l.status === "new").length, l: "jamais contactés" },
     { n: leads.filter((l) => l.status === "meeting").length, l: "RDV" },
     { n: leads.filter((l) => l.status === "won").length, l: "gagnés" },
@@ -385,13 +373,12 @@ function renderLeads() {
 function renderLeadTable(list) {
   $("#rows").innerHTML = list
     .map((l) => {
-      const a = l.answers ?? {};
       return `<tr data-kind="lead" data-id="${l.id}" tabindex="0">
-        <td>${score(l.priority)}</td>
+        <td>${fitBadge(l)}</td>
         <td class="who">${who(l)}</td>
         <td>${tag(l)}</td>
-        <td>${esc(SPORT_NAMES[a.sport] ?? "—")} · ${esc(REGIONS[a.region]?.name ?? "—")}</td>
-        <td class="muted">${esc(summary(l))}</td>
+        <td>${esc(l.fit.sportName ?? "—")} · ${esc(REGIONS[l.fit.region]?.name ?? "—")}</td>
+        <td class="muted"><div class="clamp" title="${esc(summary(l))}">${esc(summary(l))}</div></td>
         <td>${pill(STATUS, l.status)}</td>
         <td>${nextBadge(l)}</td>
         <td class="muted">${ago(l.created_at)}</td>
@@ -409,9 +396,9 @@ function renderBoard(list) {
         <div class="col__cards">${col
           .map(
             (l) => `<article class="card" draggable="true" data-kind="lead" data-id="${l.id}" tabindex="0">
-              <div class="card__top">${score(l.priority)}${tag(l)}</div>
+              <div class="card__top">${fitBadge(l)}${tag(l)}</div>
               <p class="who">${who(l)}</p>
-              <p class="muted">${esc(summary(l))}</p>
+              <p class="muted clamp clamp--3">${esc(summary(l))}</p>
               ${l.next_action_at ? `<p>${nextBadge(l)}</p>` : ""}
             </article>`
           )
@@ -499,7 +486,7 @@ function todoRow(i) {
   const r = i.rec;
   const isLead = i.kind === "lead";
   return `<li class="todo__item" data-kind="${i.kind}" data-id="${r.id}" tabindex="0">
-    ${isLead ? score(r.priority) : score(r.fit, "Score d'adéquation")}
+    ${isLead ? fitRing(r) : score(r.fit, "Score d'adéquation")}
     <div class="who"><b>${esc(isLead ? leadName(r) : r.name)}</b><small>${isLead ? (r.audience === "ecole" ? "Lead école" : "Lead pratiquant") : `Prospection · ${esc(place(r))}`}</small></div>
     <div class="todo__what">${esc(r.next_action || "Faire le point")}</div>
     ${nextBadge(r)}
@@ -552,7 +539,7 @@ function renderTodo() {
     suggest(
       "Leads à contacter en priorité",
       "Arrivés par le quiz, jamais contactés.",
-      hotLeads.map((l) => `<li class="todo__item" data-kind="lead" data-id="${l.id}" tabindex="0">${score(l.priority)}<div class="who"><b>${esc(leadName(l))}</b><small>${esc(summary(l))}</small></div><div class="todo__what">${ago(l.created_at)}</div><span></span><div class="todo__actions"></div></li>`)
+      hotLeads.map((l) => `<li class="todo__item" data-kind="lead" data-id="${l.id}" tabindex="0">${fitRing(l)}<div class="who"><b>${esc(leadName(l))}</b><small>${esc(summary(l))}</small></div><div class="todo__what">${ago(l.created_at)}</div><span></span><div class="todo__actions"></div></li>`)
     ) +
     suggest(
       "Écoles à démarcher",
@@ -987,6 +974,21 @@ const loadingHistory = `<div class="d__block" id="d-history"><h4>Historique</h4>
 
 /* ---------- Fiche lead ---------- */
 
+// Le détail de la note : chaque critère, ses points et sa raison
+function fitBlock(lead) {
+  const f = lead.fit;
+  return `<div class="d__block">
+    <h4>Compatibilité avec Glisse</h4>
+    <div class="fitcard">
+      <div class="fitcard__head">${fitRing(lead)}<div><b class="fit__label fit__label--${f.level}">${f.label}</b><small>Calculé à partir de ses réponses${f.maxTotal < 100 ? `, sur ${f.maxTotal} points (pas de lecture par l'IA)` : ""}</small></div></div>
+      <ul class="fitrows">${f.rows
+        .map((r) => `<li><div class="fitrows__top"><span>${esc(r.label)}</span><b>${r.points}/${r.max}</b></div><i><em style="width:${Math.round(r.ratio * 100)}%"></em></i><small>${esc(r.why)}</small></li>`)
+        .join("")}</ul>
+      ${f.notes.length ? `<ul class="fitnotes">${f.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+    </div>
+  </div>`;
+}
+
 function renderLeadDetail(lead) {
   const a = lead.answers ?? {};
   const r = a.result ?? {};
@@ -1004,12 +1006,13 @@ function renderLeadDetail(lead) {
 
   $("#detail").innerHTML = `
     <div class="d__head">
-      <div class="d__badges">${score(lead.priority)}${tag(lead)}<span class="muted">${HEAT[heat(lead.priority)]}</span><span id="d-linked"></span></div>
+      <div class="d__badges">${fitBadge(lead)}${tag(lead)}<span id="d-linked"></span></div>
       <h2>${esc(leadName(lead))}</h2>
       <div class="d__links"><a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a></div>
       <p class="muted">Arrivé le ${new Date(lead.created_at).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}${lead.consent ? " · consentement email ✓" : ""}</p>
     </div>
 
+    ${fitBlock(lead)}
     ${statusBlock(STATUS, lead.status)}
     <div id="d-drafts"></div>
     ${nextBlock(lead)}
@@ -1321,10 +1324,10 @@ $("#f-osm").addEventListener("submit", async (e) => {
 $("#export").addEventListener("click", () => {
   const isLeads = tab === "leads";
   const cols = isLeads
-    ? ["arrivé le", "type", "email", "école", "nom", "statut", "priorité", "sport", "région", "résultat", "prochaine action", "date prochaine action", "notes"]
+    ? ["arrivé le", "type", "email", "école", "nom", "statut", "compatibilité", "sport", "région", "résultat", "prochaine action", "date prochaine action", "notes"]
     : ["école", "sport", "ville", "département", "email", "téléphone", "site", "statut", "score", "dernier contact", "prochaine action", "date prochaine action", "notes", "source"];
   const rows = isLeads
-    ? filteredLeads().map((l) => [l.created_at, l.audience, l.email, l.school, l.name, STATUS[l.status].label, l.priority, l.answers?.sport, REGIONS[l.answers?.region]?.name, summary(l), l.next_action, l.next_action_at, l.notes])
+    ? filteredLeads().map((l) => [l.created_at, l.audience, l.email, l.school, l.name, STATUS[l.status].label, l.priority, l.fit.sportName, REGIONS[l.fit.region]?.name, summary(l), l.next_action, l.next_action_at, l.notes])
     : filteredProspects().map((p) => [p.name, SPORT_NAMES[p.sport], p.city, p.departement, p.email, p.phone, p.website, P_STATUS[p.status].label, p.fit, p.last_contact_at, p.next_action, p.next_action_at, p.notes, p.source === "osm" ? "OpenStreetMap (ODbL)" : p.source]);
   // Une cellule qui commence par = + - @ serait lue comme une formule par Excel
   const cell = (v) => {
