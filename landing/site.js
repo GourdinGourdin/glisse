@@ -27,14 +27,14 @@ document.getElementById("year").textContent = new Date().getFullYear();
 
 const nav = document.querySelector(".nav");
 const bar = document.querySelector(".scrollbar i");
-const sun = document.querySelector(".hero__sun");
+const heroVideo = document.querySelector(".hero .film video");
 
 function onScroll() {
   const y = scrollY;
   nav.classList.toggle("is-scrolled", y > 24);
   const max = document.documentElement.scrollHeight - innerHeight;
   bar.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
-  if (sun && !reduceMotion && y < innerHeight) sun.style.transform = `translate3d(0, ${y * 0.35}px, 0)`;
+  if (heroVideo && !reduceMotion && y < innerHeight) heroVideo.style.transform = `translate3d(0, ${y * 0.18}px, 0)`;
 }
 addEventListener("scroll", onScroll, { passive: true });
 onScroll();
@@ -108,6 +108,78 @@ if (tilt && !reduceMotion && matchMedia("(hover: hover)").matches) {
     tilt.style.setProperty("--ry", "0deg");
   });
 }
+
+/* ---------- Vidéos ---------- */
+
+// Une vidéo ne se charge que si elle arrive à l'écran, et ne tourne que tant qu'elle y reste.
+// Mouvement réduit ou économie de données : l'image fixe reste, sauf si le visiteur relance les vidéos.
+const videos = [...document.querySelectorAll("video[data-video]")];
+const smallScreen = matchMedia("(max-width: 760px)").matches;
+const reelItems = [...document.querySelectorAll(".reel__item")];
+const onScreen = new Set();
+let videosOff = reduceMotion || navigator.connection?.saveData === true;
+try {
+  if (localStorage.getItem("glisse-videos") === "off") videosOff = true;
+} catch {}
+
+function syncVideos() {
+  videos.forEach((v) => {
+    const panel = v.closest(".reel__item");
+    const wanted = !videosOff && onScreen.has(v) && (!panel || smallScreen || panel.classList.contains("is-open"));
+    if (!wanted) return v.pause();
+    if (!v.getAttribute("src")) v.src = `assets/video/${v.dataset.video}${smallScreen ? "-m" : ""}.mp4`;
+    v.muted = true;
+    v.play().catch(() => {});
+  });
+}
+
+// Les images fixes arrivent un écran à l'avance. Les héros ont déjà la leur, posée en CSS.
+const posters = new IntersectionObserver(
+  (entries) =>
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      e.target.poster = `assets/video/${e.target.dataset.video}.jpg`;
+      posters.unobserve(e.target);
+    }),
+  { rootMargin: "100%" }
+);
+const watch = (entries) => {
+  entries.forEach((e) => (e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target)));
+  syncVideos();
+};
+const seen = new IntersectionObserver(watch, { threshold: 0.01 });
+// Sur téléphone, les panneaux défilent côte à côte : seul celui qui est bien centré tourne
+const seenInReel = new IntersectionObserver(watch, { threshold: 0.6 });
+
+videos.forEach((v) => {
+  if (!v.closest(".film--hero, .film--page")) posters.observe(v);
+  (smallScreen && v.closest(".reel__item") ? seenInReel : seen).observe(v);
+});
+
+const openPanel = (item) => {
+  reelItems.forEach((i) => i.classList.toggle("is-open", i === item));
+  syncVideos();
+};
+reelItems.forEach((item) => {
+  item.addEventListener("pointerenter", (e) => {
+    if (e.pointerType === "mouse") openPanel(item);
+  });
+  item.addEventListener("focusin", () => openPanel(item));
+});
+
+const toggles = document.querySelectorAll("[data-video-toggle]");
+const labelToggles = () => toggles.forEach((b) => (b.textContent = videosOff ? "Lancer les vidéos" : "Mettre les vidéos en pause"));
+labelToggles();
+toggles.forEach((b) =>
+  b.addEventListener("click", () => {
+    videosOff = !videosOff;
+    try {
+      localStorage.setItem("glisse-videos", videosOff ? "off" : "on");
+    } catch {}
+    labelToggles();
+    syncVideos();
+  })
+);
 
 /* ---------- Onglets de la page À propos ---------- */
 

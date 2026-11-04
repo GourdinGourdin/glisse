@@ -18,6 +18,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/video/hero-surf.jpg" media="(min-width: 761px)">
+  <link rel="preload" as="image" href="assets/video/hero-surf-m.jpg" media="(max-width: 760px)">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -31,6 +33,7 @@
       </a>
       <button class="nav__burger" type="button" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
       <nav class="nav__links">
+        <a href="#sports">Les sports</a>
         <a href="#pratiquants">Pratiquants</a>
         <a href="#ecoles">Écoles</a>
         <a href="a-propos.html">À propos</a>
@@ -41,11 +44,8 @@
 
   <main>
     <!-- HERO -->
-    <section class="hero">
-      <div class="hero__sky" aria-hidden="true">
-        <div class="hero__sun"></div>
-        <div class="hero__grain"></div>
-      </div>
+    <section class="hero hero--film">
+      <div class="film film--hero" aria-hidden="true"><video data-video="hero-surf" muted loop playsinline preload="none"></video></div>
 
       <div class="container hero__grid">
         <div class="hero__text">
@@ -59,7 +59,7 @@
             <a href="#diagnostic" class="btn btn--glow" data-path="rider">Trouver mon niveau <span aria-hidden="true">→</span></a>
             <a href="#diagnostic" class="btn btn--ghost" data-path="school">Je gère une école</a>
           </div>
-          <p class="hero__note reveal" style="--d:.6s"><span class="pulse"></span> Le test prend 2 minutes, résultat immédiat.</p>
+          <p class="hero__note reveal" style="--d:.6s"><span class="pulse"></span> Le test prend 2 minutes, résultat immédiat. <button class="film-toggle" type="button" data-video-toggle>Mettre les vidéos en pause</button></p>
         </div>
 
         <div class="phone reveal" style="--d:.3s" aria-hidden="true" data-tilt>
@@ -94,12 +94,7 @@
         </div>
       </div>
 
-      <div class="waves" aria-hidden="true">
-        <svg class="wave wave--3" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 110c240-60 480-60 720 0s480 60 720 0 480-60 720 0 480 60 720 0v90H0z"/></svg>
-        <svg class="wave wave--2" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 130c120-45 240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0v70H0z"/></svg>
-        <svg class="wave wave--1" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 150c240-40 480-40 720 0s480 40 720 0 480-40 720 0 480 40 720 0v50H0z"/></svg>
-      </div>
-    </section>
+      </section>
 
     <div class="marquee" aria-hidden="true">
       <div class="marquee__track">
@@ -107,6 +102,44 @@
         <span>Surf</span><i>✺</i><span>Voile</span><i>✺</i><span>Kitesurf</span><i>✺</i><span>Paddle</span><i>✺</i><span>Wing foil</span><i>✺</i><span>Catamaran</span><i>✺</i><span>Bodyboard</span><i>✺</i><span>Planche à voile</span><i>✺</i>
       </div>
     </div>
+
+    <!-- SPORTS -->
+    <section class="sports" id="sports">
+      <div class="container sports__head">
+        <div>
+          <p class="eyebrow reveal">Les sports</p>
+          <h2 class="split">Choisis ton <em>terrain de jeu</em>.</h2>
+        </div>
+        <p class="reveal" style="--d:.15s">On ouvre avec le surf et la voile, puis les autres sports de glisse suivent. Choisis un sport et fais le test pour savoir par où commencer.</p>
+      </div>
+      <div class="reel">
+          <a class="reel__item is-open" href="#diagnostic" data-path="rider" style="--pos:62%">
+            <video data-video="sport-surf" muted loop playsinline preload="none" aria-hidden="true"></video>
+            <span class="reel__n">01</span>
+            <span class="reel__text"><span class="reel__tag">Pour commencer</span><b class="reel__name">Surf</b><span class="reel__line">De la mousse à tes premières vagues vertes, avec un moniteur à côté.</span></span>
+          </a>
+          <a class="reel__item" href="#diagnostic" data-path="rider" style="--pos:50%">
+            <video data-video="sport-voile" muted loop playsinline preload="none" aria-hidden="true"></video>
+            <span class="reel__n">02</span>
+            <span class="reel__text"><span class="reel__tag">Pour commencer</span><b class="reel__name">Voile</b><span class="reel__line">Apprendre à lire le vent, la barre d'un dériveur en main.</span></span>
+          </a>
+          <a class="reel__item" href="#diagnostic" data-path="rider" style="--pos:72%">
+            <video data-video="sport-kite" muted loop playsinline preload="none" aria-hidden="true"></video>
+            <span class="reel__n">03</span>
+            <span class="reel__text"><span class="reel__tag">Ensuite</span><b class="reel__name">Kite</b><span class="reel__line">Quand le vent se lève, le terrain de jeu s'agrandit.</span></span>
+          </a>
+          <a class="reel__item" href="#diagnostic" data-path="rider" style="--pos:50%">
+            <video data-video="sport-paddle" muted loop playsinline preload="none" aria-hidden="true"></video>
+            <span class="reel__n">04</span>
+            <span class="reel__text"><span class="reel__tag">Ensuite</span><b class="reel__name">Paddle</b><span class="reel__line">L'eau calme, un geste simple, et debout dès la première séance.</span></span>
+          </a>
+          <a class="reel__item" href="#diagnostic" data-path="rider" style="--pos:80%">
+            <video data-video="sport-windsurf" muted loop playsinline preload="none" aria-hidden="true"></video>
+            <span class="reel__n">05</span>
+            <span class="reel__text"><span class="reel__tag">Ensuite</span><b class="reel__name">Windsurf</b><span class="reel__line">La voile dans les mains, la planche sous les pieds.</span></span>
+          </a>
+      </div>
+    </section>
 
     <!-- PRATIQUANTS -->
     <section class="section" id="pratiquants">
@@ -171,10 +204,11 @@
     </section>
 
     <!-- COMMENT ÇA MARCHE -->
-    <section class="section section--sand">
+    <section class="interlude">
+      <div class="film " aria-hidden="true"><video data-video="ligne-coucher" muted loop playsinline preload="none"></video></div>
       <div class="container">
         <div class="section__head section__head--center">
-          <p class="eyebrow eyebrow--dark reveal">Comment ça marche</p>
+          <p class="eyebrow reveal">Comment ça marche</p>
           <h2 class="split">Du canapé au <em>line-up</em>.</h2>
         </div>
         <ol class="steps">
@@ -187,15 +221,15 @@
 
     <!-- ÉCOLES -->
     <section class="section section--deep" id="ecoles">
-      <svg class="divider divider--top" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v30c-240 50-480 50-720 0S240-20 0 30z"/></svg>
-      <div class="container">
-        <div class="section__head">
-          <div>
-            <p class="eyebrow reveal">Pour les écoles</p>
-            <h2 class="split">Tu gères une <em>école</em>.</h2>
-          </div>
-          <p class="reveal" style="--d:.15s">Entre le carnet, le fichier Excel et le téléphone qui sonne en pleine session, la saison passe vite. Glisse regroupe tout dans un seul outil.</p>
+      <div class="banner">
+        <div class="film film--top" aria-hidden="true"><video data-video="ecole-planche" muted loop playsinline preload="none"></video></div>
+        <div class="container banner__text">
+          <p class="eyebrow reveal">Pour les écoles</p>
+          <h2 class="split">Tu gères une <em>école</em>.</h2>
         </div>
+      </div>
+      <div class="container">
+        <p class="school__intro reveal">Entre le carnet, le fichier Excel et le téléphone qui sonne en pleine session, la saison passe vite. Glisse regroupe tout dans un seul outil.</p>
 
         <div class="school">
           <div class="planning reveal" aria-hidden="true">
@@ -223,7 +257,6 @@
 
         <a href="a-propos.html#offre" class="link-arrow reveal">Voir l'offre école pilote <span aria-hidden="true">→</span></a>
       </div>
-      <svg class="divider divider--bottom" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 80h1440V50c-240-50-480-50-720 0S240 100 0 50z"/></svg>
     </section>
 
     <!-- DIAGNOSTIC -->
@@ -276,7 +309,7 @@
   </main>
 
   <footer class="footer">
-    <svg class="divider divider--top" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v30c-240 50-480 50-720 0S240-20 0 30z"/></svg>
+    <div class="film film--dark" aria-hidden="true"><video data-video="ecume" muted loop playsinline preload="none"></video></div>
     <div class="container">
       <p class="footer__big split">On se voit à <em>l'eau</em>.</p>
       <div class="footer__inner">
@@ -285,7 +318,7 @@
           glisse
         </a>
         <nav class="footer__links"><a href="#pratiquants">Pratiquants</a><a href="#ecoles">Écoles</a><a href="a-propos.html">À propos</a><a href="a-propos.html#faq">FAQ</a></nav>
-        <p>&copy; <span id="year"></span> Glisse</p>
+        <p>&copy; <span id="year"></span> Glisse · Vidéos <a href="https://www.pexels.com/fr-fr/" rel="noopener">Pexels</a></p>
       </div>
     </div>
   </footer>

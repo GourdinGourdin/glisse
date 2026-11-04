@@ -40,21 +40,14 @@
 
   <main>
     <section class="hero hero--page">
-      <div class="hero__sky" aria-hidden="true">
-        <div class="hero__sun"></div>
-        <div class="hero__grain"></div>
-      </div>
+      <div class="film film--page" aria-hidden="true"><video data-video="vague-doree" muted loop playsinline preload="none"></video></div>
       <div class="container hero__page">
         <p class="eyebrow reveal">À propos</p>
         <h1 class="split">On remet les écoles <em>à l'eau</em>, pas au téléphone.</h1>
         <p class="hero__lead reveal" style="--d:.35s">Glisse est né d'un constat simple : réserver un cours de surf ou de voile, en 2026, ça se fait encore au téléphone. On veut que les écoles passent leur temps sur la plage, et que tout le monde trouve le cours qui lui va.</p>
+        <p class="hero__note reveal" style="--d:.5s"><button class="film-toggle" type="button" data-video-toggle>Mettre les vidéos en pause</button></p>
       </div>
-      <div class="waves waves--short" aria-hidden="true">
-        <svg class="wave wave--3" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 110c240-60 480-60 720 0s480 60 720 0 480-60 720 0 480 60 720 0v90H0z"/></svg>
-        <svg class="wave wave--2" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 130c120-45 240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0s240-45 360 0s240 45 360 0v70H0z"/></svg>
-        <svg class="wave wave--1" viewBox="0 0 2880 200" preserveAspectRatio="none"><path d="M0 150c240-40 480-40 720 0s480 40 720 0 480-40 720 0 480 40 720 0v50H0z"/></svg>
-      </div>
-    </section>
+      </section>
 
     <nav class="tabs" aria-label="Sections de la page">
       <div class="container tabs__inner">
@@ -140,7 +133,6 @@
 
     <!-- ÉQUIPE -->
     <section class="section section--deep" id="equipe">
-      <svg class="divider divider--top" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v30c-240 50-480 50-720 0S240-20 0 30z"/></svg>
       <div class="container">
         <div class="section__head">
           <div>
@@ -171,7 +163,6 @@
           </article>
         </div>
       </div>
-      <svg class="divider divider--bottom" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 80h1440V50c-240-50-480-50-720 0S240 100 0 50z"/></svg>
     </section>
 
     <!-- FAQ -->
@@ -208,6 +199,7 @@
 
     <section class="cta-band">
       <div class="container cta-band__inner reveal">
+        <div class="film film--dark" aria-hidden="true"><video data-video="sport-surf" muted loop playsinline preload="none"></video></div>
         <h2>Prêt à <em>glisser</em> ?</h2>
         <div class="hero__ctas">
           <a href="index.html#diagnostic" class="btn btn--glow">Faire le test <span aria-hidden="true">→</span></a>
@@ -217,7 +209,7 @@
   </main>
 
   <footer class="footer">
-    <svg class="divider divider--top" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v30c-240 50-480 50-720 0S240-20 0 30z"/></svg>
+    <div class="film film--dark" aria-hidden="true"><video data-video="ecume" muted loop playsinline preload="none"></video></div>
     <div class="container">
       <p class="footer__big split">On se voit à <em>l'eau</em>.</p>
       <div class="footer__inner">
@@ -226,7 +218,7 @@
           glisse
         </a>
         <nav class="footer__links"><a href="index.html#pratiquants">Pratiquants</a><a href="index.html#ecoles">Écoles</a><a href="a-propos.html">À propos</a><a href="#faq">FAQ</a></nav>
-        <p>&copy; <span id="year"></span> Glisse</p>
+        <p>&copy; <span id="year"></span> Glisse · Vidéos <a href="https://www.pexels.com/fr-fr/" rel="noopener">Pexels</a></p>
       </div>
     </div>
   </footer>
