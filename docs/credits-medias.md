@@ -27,4 +27,4 @@ Les pages Pexels refusent la lecture automatique : les auteurs viennent des fich
 
 ## Ajouter ou refaire un clip
 
-Boucle de 5 à 10 s en H.264, sans son, avec un fondu d'une seconde sur la fin pour raccorder au début. Viser moins de 3 Mo sur ordinateur (1280 px de large, 1600 pour le haut de page) et moins de 1 Mo sur téléphone (960 px de large, 540 x 960 pour le haut de l'accueil). Dans le HTML : `<video data-video="<nom>" muted loop playsinline preload="none">`, et `site.js` s'occupe du reste.
+Partir de la meilleure source Pexels (4K si elle existe). Boucle de 5 à 10 s en H.264, sans son, avec un fondu d'une seconde sur la fin pour raccorder au début. L'eau et l'écume demandent beaucoup de débit : ne pas descendre sous ces réglages, sinon l'image devient floue. Ordinateur : 1920 px de large, CRF 21, 6 Mbit/s au plus (2560 px et 8 Mbit/s pour le haut de l'accueil). Téléphone : 1280 px de large, CRF 25, 2,2 Mbit/s au plus (1080 x 1920 et 3 Mbit/s pour le haut de l'accueil). Ne pas zoomer une vidéo en CSS : recadrer à l'encodage. Dans le HTML : `<video data-video="<nom>" muted loop playsinline preload="none">`, et `site.js` s'occupe du reste.
