@@ -86,7 +86,8 @@ export async function relink() {
 const COOKIE = "glisse_admin";
 const MAX_AGE = 60 * 60 * 24 * 7; // 7 jours
 
-const sign = (value) => createHmac("sha256", process.env.ADMIN_PASSWORD).update(value).digest("hex");
+// Secret séparé du mot de passe : le changer déconnecte toutes les sessions sans toucher au mot de passe
+const sign = (value) => createHmac("sha256", process.env.SESSION_SECRET ?? process.env.ADMIN_PASSWORD).update(value).digest("hex");
 
 export function safeEqual(a, b) {
   const x = Buffer.from(String(a));
