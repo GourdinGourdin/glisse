@@ -16,6 +16,7 @@ const qBar = quiz.querySelector(".progress i");
 const resultBox = quiz.querySelector(".result");
 
 let state = { path: null, step: 0, answers: {} };
+const audienceOf = (path) => (path === "school" ? "ecole" : "pratiquant");
 
 function show(name) {
   Object.entries(screens).forEach(([key, el]) => (el.hidden = key !== name));
@@ -23,6 +24,7 @@ function show(name) {
 
 function start(path) {
   state = { path, step: 0, answers: {} };
+  track("quiz_start", audienceOf(path));
   renderQuestion();
 }
 
@@ -86,18 +88,19 @@ function back() {
 
 function renderResult() {
   const school = state.path === "school";
+  track("form_shown", audienceOf(state.path));
   resultBox.innerHTML = `
     <div>
       <p class="result__label">Dernière étape</p>
       <h3>${school ? "Ton analyse personnalisée est prête à être rédigée" : "On a tout ce qu'il faut pour te conseiller"}</h3>
       <p class="result__intro">${school
-        ? "On lit tes réponses et on t'écrit une analyse sur mesure : ce qui te fait perdre du temps et des clients, et par où commencer."
-        : "On lit tes réponses et on t'écrit un conseil sur mesure : le bon format de cours, le bon moment et comment progresser."}</p>
+        ? "Une IA lit tes réponses et rédige une analyse sur mesure : ce qui te fait perdre du temps et des clients, et par où commencer. Elle s'affiche ici en quelques secondes."
+        : "Une IA lit tes réponses et rédige un conseil sur mesure : le bon format de cours, le bon moment et comment progresser. Il s'affiche ici en quelques secondes."}</p>
     </div>
     <div class="capture">
-      <h3>${school ? "Reçois ton analyse" : "Reçois ton conseil personnalisé"}</h3>
+      <h3>${school ? "Affiche ton analyse" : "Affiche ton conseil personnalisé"}</h3>
       <p>${school ? "Les écoles pilotes utilisent Glisse gratuitement pendant toute la phase pilote." : "Tu rejoins aussi la liste d'attente : les 100 premiers inscrits ont leur premier cours offert."}</p>
-      ${captureForm(school ? "Recevoir mon analyse" : "Recevoir mon conseil", school)}
+      ${captureForm(school ? "Voir mon analyse" : "Voir mon conseil", school)}
       ${school && DEMO_URL ? `<p class="capture__alt">Tu préfères en parler ? <a href="${DEMO_URL}" target="_blank" rel="noopener">Réserve une démo de 15 minutes</a></p>` : ""}
     </div>
     <button type="button" class="result__restart">Refaire le test</button>`;
@@ -112,9 +115,10 @@ function captureForm(cta, withSchool = false) {
     <form novalidate>
       ${withSchool ? `<input type="text" name="school" placeholder="Nom de l'école" autocomplete="organization">` : ""}
       <input type="email" name="email" required placeholder="ton@email.fr" autocomplete="email">
-      <label class="capture__consent"><input type="checkbox" name="consent" required> J'accepte de recevoir des emails de Glisse (désinscription en un clic).</label>
+      <label class="capture__consent"><input type="checkbox" name="consent" required> J'accepte de recevoir des emails de Glisse (désinscription en répondant STOP).</label>
       <button class="btn" type="submit">${cta}</button>
     </form>
+    <p class="capture__why">Ton email sert à t'envoyer une copie de ce résultat, une seule relance et les nouvelles de Glisse. Rien d'autre.</p>
     <p class="capture__msg" role="status" aria-live="polite"></p>`;
 }
 
@@ -150,33 +154,44 @@ function reportCard(email) {
   resultBox.innerHTML = `
     <article class="report">
       <header class="report__head">
-        <span class="report__badge"><span class="pulse"></span> Analyse personnalisée</span>
+        <span class="report__badge"><span class="pulse"></span> Analyse personnalisée, rédigée par IA</span>
         <h3>${school ? "Ton diagnostic Glisse" : "Ton plan pour (enfin) aller à l'eau"}</h3>
         <p>Préparé pour ${escapeHtml(email)}, à partir de tes réponses.</p>
       </header>
       <div class="report__body" aria-live="polite">
-        <div class="report__loading"><span></span><span></span><span></span> Victor lit tes réponses…</div>
+        <div class="report__loading"><span></span><span></span><span></span> Lecture de tes réponses…</div>
       </div>
+      <p class="report__mail" role="status"></p>
       <footer class="report__foot" hidden>
         <button type="button" class="btn btn--small report__copy">Copier mon analyse</button>
         ${navigator.share ? `<button type="button" class="btn btn--line btn--small report__share">${school ? "L'envoyer à mon équipe" : "Partager"}</button>` : ""}
         <button type="button" class="result__restart">Refaire le test</button>
       </footer>
+      <p class="report__legal">Texte généré par une IA à partir de tes réponses : à prendre comme un conseil, à vérifier avec un moniteur pour tout ce qui touche à la sécurité.</p>
     </article>`;
   resultBox.querySelector(".result__restart").addEventListener("click", () => show("start"));
   return resultBox.querySelector(".report");
 }
 
-// Lit le flux NDJSON de /api/lead et affiche le texte au fur et à mesure
-async function streamAnalysis(res, card) {
+// Lit le flux NDJSON de /api/lead et affiche le texte au fur et à mesure.
+// onEnd est appelé dès que le texte est complet ; le flux reste ouvert le temps d'annoncer l'envoi de l'email.
+async function streamAnalysis(res, card, onEnd) {
   const body = card.querySelector(".report__body");
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let text = "";
   let frame = 0;
+  let ended = false;
   const paint = (done) => {
     body.innerHTML = renderAnalysis(text) + (done ? "" : '<span class="report__caret"></span>');
+  };
+  const finish = () => {
+    if (ended) return;
+    ended = true;
+    cancelAnimationFrame(frame);
+    paint(true);
+    onEnd(text);
   };
   for (;;) {
     const { value, done } = await reader.read();
@@ -192,14 +207,17 @@ async function streamAnalysis(res, card) {
         text += event.v;
         if (!frame) frame = requestAnimationFrame(() => ((frame = 0), paint(false)));
       }
-      if (event.t === "end") {
-        cancelAnimationFrame(frame);
-        paint(true);
-        return text;
+      if (event.t === "end") finish();
+      if (event.t === "mail") {
+        const email = card.dataset.email;
+        card.querySelector(".report__mail").textContent =
+          event.state === "sent" ? `Une copie vient de partir vers ${email} (regarde aussi tes spams).`
+          : event.state === "held" ? `Ton analyse est enregistrée : Victor te répond par email à ${email}.`
+          : "";
       }
     }
   }
-  paint(true);
+  if (!ended && text) finish();
   return text;
 }
 
@@ -225,7 +243,7 @@ async function submitLead(e) {
   const payload = {
     ...Object.fromEntries(new FormData(form)),
     consent: true,
-    audience: state.path === "school" ? "ecole" : "pratiquant",
+    audience: audienceOf(state.path),
     answers: state.answers,
     // Question + réponse, pour que Gemini lise exactement ce que le visiteur a écrit
     labels: list.map((q) => ({ q: q.q, a: state.answers[q.id] })).filter((l) => l.a),
@@ -256,30 +274,37 @@ async function submitLead(e) {
 
   // Le lead est enregistré : on remplace le formulaire par l'analyse, écrite en direct
   const card = reportCard(payload.email);
+  card.dataset.email = payload.email;
   card.scrollIntoView({ behavior: "smooth", block: "start" });
-  let text = "";
+
+  const showFooter = (text) => {
+    track("result_shown", payload.audience);
+    const foot = card.querySelector(".report__foot");
+    foot.hidden = false;
+    const plain = text.replace(/^## +/gm, "").replace(/\*\*/g, "");
+    foot.querySelector(".report__copy").addEventListener("click", async (ev) => {
+      const target = ev.currentTarget;
+      try {
+        await navigator.clipboard.writeText(plain);
+        target.textContent = "Copié ✓";
+      } catch {
+        target.textContent = "Copie impossible";
+      }
+    });
+    foot.querySelector(".report__share")?.addEventListener("click", () => {
+      navigator.share({ title: "Mon diagnostic Glisse", text: plain }).catch(() => {});
+    });
+  };
+
   try {
-    text = await streamAnalysis(res, card);
+    const text = await streamAnalysis(res, card, showFooter);
+    if (!text) throw new Error("vide");
   } catch {
     if (!card.querySelector(".report__body p")) {
-      card.querySelector(".report__body").innerHTML = "<p>Ton analyse a bien été enregistrée, mais l'affichage a été interrompu. Victor te la renvoie personnellement très vite.</p>";
+      card.querySelector(".report__body").innerHTML = "<p>Tes réponses sont bien enregistrées, mais l'affichage a été interrompu. Victor te répond personnellement par email très vite.</p>";
+      card.querySelector(".report__foot").hidden = false;
     }
   }
-
-  const foot = card.querySelector(".report__foot");
-  foot.hidden = false;
-  const plain = text.replace(/^## +/gm, "").replace(/\*\*/g, "");
-  foot.querySelector(".report__copy").addEventListener("click", async (ev) => {
-    try {
-      await navigator.clipboard.writeText(plain);
-      ev.currentTarget.textContent = "Copié ✓";
-    } catch {
-      ev.currentTarget.textContent = "Copie impossible";
-    }
-  });
-  foot.querySelector(".report__share")?.addEventListener("click", () => {
-    navigator.share({ title: "Mon diagnostic Glisse", text: plain }).catch(() => {});
-  });
 }
 
 /* ---------- Branchements ---------- */

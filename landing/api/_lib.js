@@ -36,6 +36,12 @@ export const clean = (v, max = 200) => (v == null ? null : String(v).trim().slic
 // Date au format AAAA-MM-JJ, ou null
 export const isoDate = (v) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v)) ? v : null);
 
+// Journal de la machine : ne fait jamais échouer le parcours du visiteur
+export async function logRun(run) {
+  const { error } = await db().from("runs").insert(run);
+  if (error) console.error("run log failed:", error.message);
+}
+
 /* ---------- Lien entre prospects et leads ---------- */
 
 // Adresses personnelles : leur domaine ne permet pas de reconnaître une école
@@ -82,7 +88,7 @@ const MAX_AGE = 60 * 60 * 24 * 7; // 7 jours
 
 const sign = (value) => createHmac("sha256", process.env.ADMIN_PASSWORD).update(value).digest("hex");
 
-function safeEqual(a, b) {
+export function safeEqual(a, b) {
   const x = Buffer.from(String(a));
   const y = Buffer.from(String(b));
   return x.length === y.length && timingSafeEqual(x, y);

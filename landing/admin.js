@@ -68,6 +68,7 @@ function nextBadge(rec) {
 /* ---------- État ---------- */
 
 let leads = [];
+let queue = { drafts: [], mail: { configured: false } }; // emails en attente du clic humain
 let prospects = [];
 let tab = "leads";
 let view = "table";
@@ -196,9 +197,10 @@ $("#logout").addEventListener("click", async () => {
 
 async function load() {
   try {
-    const [l, p] = await Promise.all([api("/api/admin/leads"), api("/api/admin/prospects")]);
+    const [l, p, q] = await Promise.all([api("/api/admin/leads"), api("/api/admin/prospects"), api("/api/admin/emails")]);
     leads = l.leads.map(withPriority);
     prospects = p.prospects;
+    queue = q;
     $("#app").hidden = false;
     render();
   } catch (err) {
@@ -218,8 +220,8 @@ $("#refresh").addEventListener("click", async () => {
 function setTab(name) {
   tab = name;
   $$(".tab").forEach((b) => b.classList.toggle("is-on", b.dataset.tab === name));
-  ["todo", "leads", "prospects"].forEach((t) => ($(`#tab-${t}`).hidden = t !== name));
-  $("#export").hidden = name === "todo";
+  ["todo", "leads", "prospects", "machine"].forEach((t) => ($(`#tab-${t}`).hidden = t !== name));
+  $("#export").hidden = name === "todo" || name === "machine";
   render();
   try {
     localStorage.setItem("glisse-crm-tab", name);
@@ -305,8 +307,20 @@ function render() {
   renderTodoCount();
   if (tab === "leads") renderLeads();
   else if (tab === "prospects") renderProspects();
+  else if (tab === "machine") renderMachine();
   else renderTodo();
 }
+
+const FLAGS = {
+  injection_attempt: "Tentative de manipulation",
+  missing_info: "Réponses trop courtes",
+  fake_or_joke: "Réponses fantaisistes",
+  disposable_email: "Email jetable",
+  output_link: "Lien dans le texte généré",
+  output_leak: "Fuite possible des consignes",
+  output_figure: "Chiffre absent des réponses",
+  output_truncated: "Texte généré incomplet",
+};
 
 const pill = (map, status) => `<span class="pill pill--${map[status].tone}">${map[status].label}</span>`;
 const score = (p, title) => `<span class="score score--${heat(p)}" title="${title ?? HEAT[heat(p)]}">${p}</span>`;
@@ -477,7 +491,7 @@ function todoItems() {
 }
 
 function renderTodoCount() {
-  const n = todoItems().filter((i) => i.date <= today()).length;
+  const n = todoItems().filter((i) => i.date <= today()).length + queue.drafts.length;
   $("#todo-count").textContent = n || "";
 }
 
@@ -520,8 +534,21 @@ function renderTodo() {
       ? `<section class="todo__group"><h2>${title}</h2><p class="muted todo__hint">${hint}</p><ul>${rows.join("")}</ul></section>`
       : "";
 
+  // Emails en attente du clic humain, en premier : rien de ce qui est bloqué ne part sans validation
+  const draftRows = queue.drafts.map((d) => {
+    const l = d.leads ?? {};
+    return `<li class="todo__item" data-kind="lead" data-id="${d.lead_id}" tabindex="0">
+      <span class="kind-chip">${MAIL_KIND[d.kind] ?? "Email"}</span>
+      <div class="who"><b>${esc(l.school || l.name || l.email)}</b><small>${esc(d.subject ?? "")}</small></div>
+      <div class="todo__what">${esc(d.hold_reason ?? "À relire")}</div><span></span><div class="todo__actions"></div>
+    </li>`;
+  });
+  const gmailOff = queue.mail.configured ? "" : `<p class="notice"><b>Gmail n'est pas connecté.</b> Les analyses s'affichent et les leads arrivent, mais les emails attendent ici. Ajoute GMAIL_USER et GMAIL_APP_PASSWORD pour les envoyer.</p>`;
+
   $("#todo").innerHTML =
-    (html || `<div class="todo__empty"><b>Rien de prévu.</b><span>Planifie une prochaine action depuis la fiche d'un lead ou d'une école : elle apparaîtra ici le jour venu.</span></div>`) +
+    gmailOff +
+    (draftRows.length ? `<section class="todo__group todo__group--today"><h2>Emails à valider <em>${draftRows.length}</em></h2><p class="muted todo__hint">Clique pour relire, corriger et envoyer.</p><ul>${draftRows.join("")}</ul></section>` : "") +
+    (html || draftRows.length ? html : `<div class="todo__empty"><b>Rien de prévu.</b><span>Planifie une prochaine action depuis la fiche d'un lead ou d'une école : elle apparaîtra ici le jour venu.</span></div>`) +
     suggest(
       "Leads à contacter en priorité",
       "Arrivés par le quiz, jamais contactés.",
@@ -609,6 +636,10 @@ async function refreshExtras(kind, id) {
     const rec = kind === "lead" ? withPriority(data.lead) : data.prospect;
     updateLocal(kind, rec);
     $("#d-history").outerHTML = timeline(data.activities, data.emails ?? []);
+    if (kind === "lead") {
+      $("#d-drafts").outerHTML = draftsBlock((data.emails ?? []).filter((m) => m.status === "draft"));
+      bindDrafts(id);
+    }
     const linked = $("#d-linked");
     if (kind === "lead" && data.prospect) linked.innerHTML = `<button type="button" class="linked" data-open="prospect:${data.prospect.id}">Fiche prospection →</button>`;
     if (kind === "prospect" && rec.lead) linked.innerHTML = `<button type="button" class="linked" data-open="lead:${rec.lead.id}">A fait le quiz →</button>`;
@@ -714,10 +745,64 @@ function logBlock() {
   </div>`;
 }
 
+const MAIL_KIND = { email1: "Email 1", followup: "Relance", manual: "Message", reply: "Réponse" };
+
+// Brouillons de ce lead : le clic humain avant l'envoi
+function draftsBlock(drafts) {
+  if (!drafts.length) return `<div id="d-drafts"></div>`;
+  return `<div class="d__block d__block--draft" id="d-drafts">
+    <h4>Email à valider</h4>
+    ${drafts.map((d) => `<form class="draft" data-draft="${d.id}">
+      <p class="draft__why"><b>${MAIL_KIND[d.kind] ?? "Email"}</b> · ${esc(d.hold_reason ?? "À relire")}</p>
+      <label class="d__field">Objet<input name="subject" value="${esc(d.subject ?? "")}" maxlength="200" required></label>
+      <label class="d__field">Texte<textarea name="body" rows="12" maxlength="8000" required>${esc(d.body ?? "")}</textarea></label>
+      <div class="tpl__actions">
+        <button class="btn btn--small" type="submit"${queue.mail.configured ? "" : ' disabled title="Connecte d\'abord Gmail"'}>Valider et envoyer</button>
+        <button class="ghost ghost--dark" type="button" data-draft-del="${d.id}">Supprimer</button>
+      </div>
+    </form>`).join("")}
+  </div>`;
+}
+
+function bindDrafts(leadId) {
+  $$("#d-drafts form").forEach((f) =>
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = $("button[type=submit]", f);
+      btn.disabled = true;
+      try {
+        const data = await post("/api/admin/emails", { id: f.dataset.draft, subject: f.subject.value, body: f.body.value });
+        updateLocal("lead", data.lead);
+        queue.drafts = queue.drafts.filter((d) => d.id !== f.dataset.draft);
+        syncHead("lead", data.lead);
+        toast("Email envoyé");
+        render();
+        await refreshExtras("lead", leadId);
+      } catch (err) {
+        toast(err.message, true);
+        btn.disabled = false;
+      }
+    })
+  );
+  $$("#d-drafts [data-draft-del]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      if (!confirm("Supprimer ce brouillon ? Rien ne sera envoyé.")) return;
+      try {
+        await api(`/api/admin/emails?id=${encodeURIComponent(b.dataset.draftDel)}`, { method: "DELETE" });
+        queue.drafts = queue.drafts.filter((d) => d.id !== b.dataset.draftDel);
+        render();
+        await refreshExtras("lead", leadId);
+      } catch (err) {
+        toast(err.message, true);
+      }
+    })
+  );
+}
+
 function timeline(activities, emails = []) {
   const items = [
     ...activities.map((a) => ({ at: a.created_at, html: `<li class="ev ev--${a.type}"><div><b>${ACTIVITY[a.type]}</b><time>${when(a.created_at)}</time><button type="button" class="ev__del" data-del-activity="${a.id}" title="Supprimer">×</button></div>${a.body ? `<p>${esc(a.body)}</p>` : ""}</li>` })),
-    ...emails.map((m) => ({ at: m.sent_at, html: `<li class="ev ev--mail-${m.direction}"><div><b>${m.direction === "in" ? "Email reçu" : "Email automatique"}</b> · ${esc(m.subject ?? "")}<time>${when(m.sent_at)}</time></div><p>${esc((m.body ?? "").slice(0, 600))}</p></li>` })),
+    ...emails.filter((m) => m.status !== "draft").map((m) => ({ at: m.sent_at, html: `<li class="ev ev--mail-${m.direction}"><div><b>${m.direction === "in" ? "Email reçu" : `Email envoyé${MAIL_KIND[m.kind] ? ` (${MAIL_KIND[m.kind].toLowerCase()})` : ""}`}</b> · ${esc(m.subject ?? "")}<time>${when(m.sent_at)}</time></div><p>${esc((m.body ?? "").slice(0, 600))}</p></li>` })),
   ].sort((a, b) => new Date(b.at) - new Date(a.at));
   return `<div class="d__block" id="d-history"><h4>Historique</h4>${items.length ? `<ul class="timeline">${items.map((i) => i.html).join("")}</ul>` : `<p class="muted">Rien pour l'instant.</p>`}</div>`;
 }
@@ -733,7 +818,8 @@ function templatesBlock(tpls, to, kind, id) {
           ${tpls[k].subject ? `<p class="tpl__subject"><span>Objet</span>${esc(tpls[k].subject)}</p>` : ""}
           <textarea class="tpl__body" rows="10">${esc(tpls[k].body)}</textarea>
           <div class="tpl__actions">
-            ${tpls[k].subject ? `<button type="button" class="btn btn--small" data-mail="${k}"${to ? "" : " disabled title=\"Ajoute d'abord un email\""}>Ouvrir dans ma messagerie</button>` : ""}
+            ${kind === "lead" && queue.mail.configured ? `<button type="button" class="btn btn--small" data-send="${k}">Envoyer depuis Gmail</button>` : ""}
+            ${tpls[k].subject ? `<button type="button" class="${kind === "lead" && queue.mail.configured ? "ghost ghost--dark" : "btn btn--small"}" data-mail="${k}"${to ? "" : " disabled title=\"Ajoute d'abord un email\""}>Ouvrir dans ma messagerie</button>` : ""}
             <button type="button" class="ghost ghost--dark" data-copy="${k}">Copier</button>
             ${tpls[k].subject ? `<button type="button" class="ghost ghost--dark" data-logsent="${k}">Noter comme envoyé</button>` : ""}
           </div>
@@ -826,6 +912,27 @@ function bindCommon(kind, rec, tpls, to) {
     })
   );
   $$("[data-mail]", root).forEach((b) => b.addEventListener("click", () => (location.href = mailto(to, tpls[b.dataset.mail].subject, bodyOf(b.dataset.mail)))));
+  $$("[data-send]", root).forEach((b) =>
+    b.addEventListener("click", async () => {
+      const k = b.dataset.send;
+      if (!confirm(`Envoyer ce message à ${to} ?`)) return;
+      b.disabled = true;
+      try {
+        const sendKind = k === "followup" ? "followup" : rec.status === "new" ? "email1" : "manual";
+        const data = await post("/api/admin/emails", { lead_id: rec.id, subject: tpls[k].subject, body: bodyOf(k), kind: sendKind });
+        updateLocal("lead", data.lead);
+        syncHead("lead", data.lead);
+        queue = await api("/api/admin/emails");
+        toast("Email envoyé");
+        render();
+        await refreshExtras("lead", rec.id);
+      } catch (err) {
+        toast(err.message, true);
+      } finally {
+        b.disabled = false;
+      }
+    })
+  );
   $$("[data-logsent]", root).forEach((b) =>
     b.addEventListener("click", async () => {
       const k = b.dataset.logsent;
@@ -904,10 +1011,12 @@ function renderLeadDetail(lead) {
     </div>
 
     ${statusBlock(STATUS, lead.status)}
+    <div id="d-drafts"></div>
     ${nextBlock(lead)}
 
+    ${lead.ai_flags?.length ? `<div class="d__block"><h4>Contrôles</h4><p class="flags">${lead.ai_flags.map((f) => `<span class="flag">${esc(FLAGS[f] ?? f)}</span>`).join("")}</p></div>` : ""}
     ${lead.ai_summary || !r.score && !r.level ? `<div class="d__block">
-      <h4>Analyse Gemini</h4>
+      <h4>Qualification par l'IA</h4>
       <p class="d__summary">${lead.ai_summary ? esc(lead.ai_summary) : `<span class="muted">${lead.ai_source === "fallback" ? "Gemini n'a pas répondu à l'arrivée du lead : texte de secours utilisé, à personnaliser." : "Pas d'analyse."}</span>`}</p>
     </div>` : ""}
     <div class="d__block"${r.score || r.level ? "" : " hidden"}>
@@ -1236,6 +1345,114 @@ $("#export").addEventListener("click", () => {
 
 try {
   const saved = localStorage.getItem("glisse-crm-tab");
-  if (["todo", "leads", "prospects"].includes(saved)) setTab(saved);
+  if (["todo", "leads", "prospects", "machine"].includes(saved)) setTab(saved);
 } catch {}
 load();
+
+/* ---------- Machine : tunnel, coût par lead, erreurs, robot ---------- */
+
+const usd = (n, d = 4) => `$${Number(n ?? 0).toFixed(d)}`;
+const KIND_LABEL = { analysis: "Analyse du lead", qualify: "Qualification", chat: "Chatbot", followup: "Relance rédigée", email: "Envoi d'email", robot: "Robot" };
+const RUN_STATUS = { ok: "OK", error: "Erreur", fallback: "Secours", capped: "Plafonné", blocked: "Bloqué" };
+
+async function renderMachine() {
+  let s;
+  try {
+    s = await api("/api/admin/stats");
+  } catch (err) {
+    $("#machine").innerHTML = `<p class="notice">${esc(err.message)}</p>`;
+    return;
+  }
+  if (tab !== "machine") return;
+
+  const kinds = Object.entries(s.byKind);
+  const sum = (key) => kinds.reduce((a, [, k]) => a + k[key], 0);
+  const leadsCount = leads.length;
+  const steps = [
+    ["Visites", s.funnel.visit],
+    ["Test commencé", s.funnel.quizStart],
+    ["Formulaire atteint", s.funnel.formShown],
+    ["Résultat affiché", s.funnel.resultShown],
+  ];
+  const top = Math.max(1, ...steps.map((x) => x[1]));
+
+  const llmKinds = ["analysis", "qualify", "chat", "followup"];
+  const costRows = llmKinds.filter((k) => s.byKind[k]).map((k) => {
+    const v = s.byKind[k];
+    const billed = Math.max(1, v.ok);
+    return `<tr><td>${KIND_LABEL[k]}</td><td>${v.runs}</td><td>${Math.round(v.tokensIn / billed)} / ${Math.round(v.tokensOut / billed)}</td><td>${usd(v.cost / billed)}</td><td>${usd(v.cost)}</td><td>${v.timed ? (v.ms / v.timed / 1000).toFixed(1) + " s" : "—"}</td></tr>`;
+  }).join("");
+
+  let robotDetail = "Pas encore lancé.";
+  if (s.lastRobot) {
+    robotDetail = `${when(s.lastRobot.created_at)} · ${RUN_STATUS[s.lastRobot.status]}`;
+    try {
+      const d = JSON.parse(s.lastRobot.detail);
+      robotDetail += ` · ${d.checked} lead(s) vérifié(s), ${d.replies} réponse(s), ${d.drafts} relance(s) à valider, ${d.followUpsSent} envoyée(s)${d.errors?.length ? `, ${d.errors.length} erreur(s)` : ""}`;
+    } catch {
+      robotDetail += ` · ${esc(s.lastRobot.detail ?? "")}`;
+    }
+  }
+
+  $("#machine").innerHTML = `
+    <section class="kpis kpis--machine">
+      <div class="kpi kpi--hot"><b>${s.costPerLead == null ? "—" : usd(s.costPerLead)}</b><span>coût IA par lead (${s.measuredLeads} mesurés)</span></div>
+      <div class="kpi"><b>${usd(s.totalCost, 3)}</b><span>coût IA total</span></div>
+      <div class="kpi"><b>${sum("runs")}</b><span>exécutions enregistrées</span></div>
+      <div class="kpi"><b>${sum("errors")}</b><span>erreurs</span></div>
+      <div class="kpi"><b>${sum("fallback")} · ${sum("capped")}</b><span>secours · plafonnés</span></div>
+      <div class="kpi"><b>${sum("blocked")}</b><span>tentatives bloquées</span></div>
+    </section>
+
+    <section class="machine__grid">
+      <div class="machine__card">
+        <h3>Tunnel</h3>
+        <div class="bars">${steps.map(([l, n]) => `<div class="bars__row"><span>${l}</span><i><em style="width:${(n / top) * 100}%"></em></i><b>${n}</b></div>`).join("")}
+          <div class="bars__row"><span>Leads (tous)</span><i><em style="width:${Math.min(100, (leadsCount / top) * 100)}%"></em></i><b>${leadsCount}</b></div>
+        </div>
+        <p class="muted machine__note">${s.funnel.since ? `Mesuré depuis le ${new Date(s.funnel.since).toLocaleDateString("fr-FR")} : les leads plus anciens n'ont pas de visite associée.` : "Aucune visite mesurée pour l'instant."} ${s.funnel.chatOpen} ouverture(s) du chatbot. Anonyme : ni cookie, ni IP.</p>
+      </div>
+      <div class="machine__card">
+        <h3>Robot de relance</h3>
+        <ul class="checks">
+          <li class="${s.mail.configured ? "is-ok" : "is-off"}">Gmail ${s.mail.configured ? "connecté" : "pas encore connecté"}</li>
+          <li class="${s.cron ? "is-ok" : "is-off"}">Tous les jours à 9 h (Vercel Cron)${s.cron ? "" : " : CRON_SECRET manquant"}</li>
+          <li class="is-ok">Relance après ${s.followDays} jour(s) sans réponse, une seule</li>
+          <li class="is-ok">${s.autoFollowUp ? "Relance envoyée automatiquement" : "Relance à valider d'un clic avant l'envoi"}</li>
+        </ul>
+        <p class="muted machine__note">Dernier passage : ${robotDetail}</p>
+        <button class="btn btn--small" id="run-robot" type="button">Lancer le robot maintenant</button>
+      </div>
+    </section>
+
+    <section class="machine__card machine__wide">
+      <h3>Coût par exécution, ligne par ligne</h3>
+      <div class="tablewrap tablewrap--flat"><table class="table table--compact">
+        <thead><tr><th>Poste</th><th>Exécutions</th><th>Jetons entrée / sortie (moy.)</th><th>Coût moyen</th><th>Coût total</th><th>Durée moy.</th></tr></thead>
+        <tbody>${costRows || `<tr><td colspan="6" class="muted">Pas encore de données : fais un test sur le site.</td></tr>`}
+          <tr><td>Hébergement, base, Gmail</td><td colspan="2" class="muted">Vercel Hobby, Supabase Free, Gmail</td><td>$0</td><td>$0</td><td>—</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted machine__note">Coûts estimés au tarif public de Google (gemini-3-flash-preview : $0,50 en entrée et $3 en sortie par million de jetons), réflexion du modèle comprise. Le temps humain de relecture n'est pas compté.</p>
+    </section>
+
+    <section class="machine__card machine__wide">
+      <h3>Dernières exécutions</h3>
+      <div class="tablewrap tablewrap--flat"><table class="table table--compact">
+        <thead><tr><th>Quand</th><th>Type</th><th>Statut</th><th>Modèle</th><th>Jetons</th><th>Coût</th><th>Durée</th><th>Détail</th></tr></thead>
+        <tbody>${s.runs.map((r) => `<tr><td>${when(r.created_at)}</td><td>${KIND_LABEL[r.kind] ?? esc(r.kind)}</td><td><span class="run run--${r.status}">${RUN_STATUS[r.status] ?? esc(r.status)}</span></td><td>${esc(r.model ?? "—")}</td><td>${r.tokens_in} / ${r.tokens_out}</td><td>${usd(r.cost_usd)}</td><td>${r.duration_ms ? (r.duration_ms / 1000).toFixed(1) + " s" : "—"}</td><td class="run__detail">${r.kind === "robot" ? "" : esc(r.detail ?? "")}</td></tr>`).join("") || `<tr><td colspan="8" class="muted">Rien pour l'instant.</td></tr>`}</tbody>
+      </table></div>
+    </section>`;
+
+  $("#run-robot").addEventListener("click", async (e) => {
+    e.currentTarget.disabled = true;
+    try {
+      const r = await post("/api/robot", {});
+      toast(r.note ?? `Robot : ${r.checked} vérifié(s), ${r.replies} réponse(s), ${r.drafts} relance(s) à valider${r.errors.length ? `, ${r.errors.length} erreur(s)` : ""}`, Boolean(r.note || r.errors.length));
+      await load();
+    } catch (err) {
+      toast(err.message, true);
+      renderMachine();
+    }
+  });
+}

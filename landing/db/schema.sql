@@ -89,3 +89,43 @@ alter table leads add column if not exists ai_at timestamptz;
 -- Qualification du lead par Gemini à partir des réponses libres
 alter table leads add column if not exists ai_priority int check (ai_priority between 0 and 100);
 alter table leads add column if not exists ai_summary text;
+
+-- Contrôles sur le lead : tentative de manipulation, infos manquantes, email jetable… (un drapeau = validation humaine)
+alter table leads add column if not exists ai_flags text[] not null default '{}';
+
+-- File d'attente des emails : un brouillon (status = 'draft') attend un clic humain dans le CRM
+alter table emails add column if not exists status text not null default 'sent' check (status in ('draft', 'sent'));
+alter table emails add column if not exists kind text check (kind in ('email1', 'followup', 'manual', 'reply'));
+alter table emails add column if not exists hold_reason text;
+create index if not exists emails_status_idx on emails (status);
+
+-- Journal de la machine : chaque appel au modèle, envoi d'email ou passage du robot, avec jetons, coût et durée
+create table if not exists runs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  kind text not null check (kind in ('analysis', 'qualify', 'chat', 'followup', 'email', 'robot')),
+  status text not null check (status in ('ok', 'error', 'fallback', 'capped', 'blocked')),
+  lead_id uuid references leads(id) on delete set null,
+  model text,
+  tokens_in int not null default 0,
+  tokens_out int not null default 0,
+  cost_usd numeric(12, 6) not null default 0,
+  duration_ms int,
+  ip_hash text,                 -- empreinte de l'IP pour limiter les abus, jamais l'IP elle-même
+  detail text
+);
+create index if not exists runs_created_idx on runs (created_at desc);
+create index if not exists runs_ip_idx on runs (ip_hash, kind, created_at);
+
+-- Mesure anonyme du tunnel (ni cookie, ni IP, ni email)
+create table if not exists events (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  type text not null check (type in ('visit', 'quiz_start', 'form_shown', 'result_shown', 'chat_open')),
+  audience text,
+  path text
+);
+create index if not exists events_type_idx on events (type, created_at);
+
+alter table runs enable row level security;
+alter table events enable row level security;

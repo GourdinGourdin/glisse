@@ -32,6 +32,7 @@
         <button class="tab" data-tab="todo" role="tab">À faire <em id="todo-count"></em></button>
         <button class="tab is-on" data-tab="leads" role="tab">Leads</button>
         <button class="tab" data-tab="prospects" role="tab">Prospection</button>
+        <button class="tab" data-tab="machine" role="tab">Machine</button>
       </nav>
       <div class="top__actions">
         <button class="ghost" id="refresh" type="button" title="Recharger les données">↻</button>
@@ -135,6 +136,11 @@
         </div>
         <p class="attribution">Données écoles et clubs : © contributeurs <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, licence ODbL.</p>
       </section>
+    </main>
+
+    <!-- MACHINE : tunnel, coût par lead, erreurs, robot -->
+    <main class="wrap" id="tab-machine" hidden>
+      <div id="machine"><p class="muted">Chargement…</p></div>
     </main>
 
     <!-- Fiche -->

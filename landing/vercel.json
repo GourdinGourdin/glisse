@@ -2,6 +2,9 @@
   "cleanUrls": true,
   "functions": {
     "api/admin/prospects.js": { "maxDuration": 60 },
-    "api/lead.js": { "maxDuration": 60 }
-  }
+    "api/lead.js": { "maxDuration": 60 },
+    "api/chat.js": { "maxDuration": 30 },
+    "api/robot.js": { "maxDuration": 60 }
+  },
+  "crons": [{ "path": "/api/robot", "schedule": "0 7 * * *" }]
 }

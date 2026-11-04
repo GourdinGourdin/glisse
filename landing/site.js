@@ -2,6 +2,25 @@
 
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/* ---------- Mesure anonyme du tunnel (ni cookie, ni IP, ni email) ---------- */
+
+function track(type, audience) {
+  if (location.hostname === "localhost") return;
+  // Une seule fois par session pour chaque étape
+  const key = `glisse-${type}-${audience ?? ""}`;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+  } catch {}
+  fetch("/api/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type, audience, path: location.pathname }),
+    keepalive: true,
+  }).catch(() => {});
+}
+track("visit");
+
 document.getElementById("year").textContent = new Date().getFullYear();
 
 /* ---------- Nav ---------- */
